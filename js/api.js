@@ -44,26 +44,6 @@ export async function searchCityAPI(query) {
     }
 }
 
-export async function fetchHaditsBookAPI(bookName) {
-    try {
-        const res = await fetch(`https://api.hadith.gading.dev/books/${bookName}?range=1-20`);
-        return await res.json();
-    } catch (e) {
-        console.error(e);
-        return null;
-    }
-}
-
-export async function fetchDoaListAPI() {
-    try {
-        const res = await fetch('https://open-api.my.id/api/doa');
-        return await res.json();
-    } catch (e) {
-        console.error(e);
-        return [];
-    }
-}
-
 // Fetch Hadis dari MyQuran API v3
 export async function fetchHaditsBookAPI(bookName) {
     try {
@@ -88,6 +68,17 @@ export async function fetchHaditsBookAPI(bookName) {
     } catch (e) {
         console.error("Gagal fetch Hadits dari MyQuran v3:", e);
         return null;
+    }
+}
+
+
+export async function fetchDoaListAPI() {
+    try {
+        const res = await fetch('https://open-api.my.id/api/doa');
+        return await res.json();
+    } catch (e) {
+        console.error(e);
+        return [];
     }
 }
 
