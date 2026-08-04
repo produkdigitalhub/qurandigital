@@ -1,4 +1,3 @@
-// js/api.js
 
 export async function fetchSurahListAPI() {
     try {
