@@ -1,62 +1,12 @@
-// ==========================================
-// 1. API DOA & DZIKIR (EQuran.id)
-// ==========================================
-export async function fetchDoaListAPI(grup = '') {
-    // 1. Cek Cache LocalStorage jika tanpa parameter grup
-    if (!grup) {
-        const cached = localStorage.getItem('doa_list_cache');
-        if (cached) return JSON.parse(cached);
-    }
+// js/api.js
 
-    try {
-        const url = grup 
-            ? `https://equran.id/api/doa?grup=${encodeURIComponent(grup)}`
-            : `https://equran.id/api/doa`;
-
-        const res = await fetch(url);
-        const data = await res.json();
-        
-        const doaData = Array.isArray(data) ? data : (data.data || []);
-        
-        const result = doaData.map((d, index) => ({
-            id: d.id || index + 1,
-            judul: d.nama || d.judul || d.title,
-            arab: d.ar || d.arab || d.arabic,
-            latin: d.tr || d.latin,
-            arti: d.idn || d.arti || d.indonesian,
-            kat: d.grup || d.kategori || 'umum',
-            tag: d.tag || []
-        }));
-
-        // Simpan ke Cache jika ini fetch full list
-        if (!grup && result.length > 0) {
-            localStorage.setItem('doa_list_cache', JSON.stringify(result));
-        }
-
-        return result;
-    } catch (err) {
-        console.error("Gagal mengambil daftar doa:", err);
-        return null;
-    }
-}
-
-// ==========================================
-// 2. API AL-QUR'AN (EQuran.id v2)
-// ==========================================
 export async function fetchSurahListAPI() {
-    const cached = localStorage.getItem('surah_list');
-    if (cached) return JSON.parse(cached);
-
     try {
         const res = await fetch('https://equran.id/api/v2/surat');
         const data = await res.json();
-        if (data.code === 200) {
-            localStorage.setItem('surah_list', JSON.stringify(data.data));
-            return data.data;
-        }
-        return [];
-    } catch (err) {
-        console.error("Gagal mengambil data surah:", err);
+        return data.data;
+    } catch (e) {
+        console.error(e);
         return [];
     }
 }
@@ -65,64 +15,49 @@ export async function fetchSurahDetailAPI(nomor) {
     try {
         const res = await fetch(`https://equran.id/api/v2/surat/${nomor}`);
         const data = await res.json();
-        return data.code === 200 ? data.data : null;
-    } catch (err) {
-        console.error("Gagal mengambil detail surah:", err);
+        return data.data;
+    } catch (e) {
+        console.error(e);
         return null;
     }
 }
 
-// ==========================================
-// 3. API JADWAL SHOLAT (MyQuran v2)
-// ==========================================
 export async function fetchPrayerScheduleAPI(cityId, yyyy, mm, dd) {
     try {
         const res = await fetch(`https://api.myquran.com/v2/sholat/jadwal/${cityId}/${yyyy}/${mm}/${dd}`);
         return await res.json();
-    } catch (err) {
-        console.error("Gagal mengambil jadwal sholat:", err);
+    } catch (e) {
+        console.error(e);
         return null;
     }
 }
 
 export async function searchCityAPI(query) {
     try {
-        const res = await fetch(`https://api.myquran.com/v2/sholat/kota/cari/${encodeURIComponent(query)}`);
+        const res = await fetch(`https://api.myquran.com/v2/sholat/kota/cari/${query}`);
         return await res.json();
-    } catch (err) {
-        console.error("Gagal mencari kota:", err);
+    } catch (e) {
+        console.error(e);
         return null;
     }
 }
 
-// ==========================================
-// 4. API HADITS (MyQuran v2)
-// ==========================================
-export async function fetchHaditsBookAPI(bookName = 'arbain') {
+export async function fetchHaditsBookAPI(bookName) {
     try {
-        // Mendukung endpoints MyQuran Hadits (Default ke Hadits Arbain)
-        const endpoint = bookName === 'arbain' 
-            ? 'https://api.myquran.com/v2/hadits/arbain/semua'
-            : `https://api.myquran.com/v2/hadits/arbain/semua`;
+        const res = await fetch(`https://api.hadith.gading.dev/books/${bookName}?range=1-20`);
+        return await res.json();
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+}
 
-        const res = await fetch(endpoint);
-        const data = await res.json();
-        if (data && data.status) {
-            return {
-                code: 200,
-                data: {
-                    hadiths: data.data.map(item => ({
-                        number: item.no,
-                        arab: item.arab,
-                        id: item.indo,
-                        judul: item.judul
-                    }))
-                }
-            };
-        }
-        return null;
-    } catch (err) {
-        console.error("Gagal mengambil hadis:", err);
-        return null;
+export async function fetchDoaListAPI() {
+    try {
+        const res = await fetch('https://open-api.my.id/api/doa');
+        return await res.json();
+    } catch (e) {
+        console.error(e);
+        return [];
     }
 }
