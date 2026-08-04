@@ -1,14 +1,16 @@
 export function showToast(msg) {
-    const t = document.getElementById('toast');[cite: 1]
-    t.innerText = msg;[cite: 1]
-    t.classList.remove('opacity-0', 'pointer-events-none');[cite: 1]
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.innerText = msg;
+    t.classList.remove('opacity-0', 'pointer-events-none');
     setTimeout(() => {
-        t.classList.add('opacity-0', 'pointer-events-none');[cite: 1]
-    }, 2500);[cite: 1]
+        t.classList.add('opacity-0', 'pointer-events-none');
+    }, 2500);
 }
 
 export function renderSurahListUI(list, onSurahClick) {
-    const container = document.getElementById('surah-list');[cite: 1]
+    const container = document.getElementById('surah-list');
+    if (!container) return;
     container.innerHTML = list.map(s => `
         <div data-surah="${s.nomor}" class="surah-item p-3.5 bg-white rounded-2xl shadow-sm border border-slate-100 hover:border-emerald-500 flex justify-between items-center cursor-pointer transition">
             <div class="flex items-center space-x-3">
@@ -24,7 +26,7 @@ export function renderSurahListUI(list, onSurahClick) {
                 <span class="font-arabic font-bold text-lg text-emerald-800">${s.nama}</span>
             </div>
         </div>
-    `).join('');[cite: 1]
+    `).join('');
 
     document.querySelectorAll('.surah-item').forEach(item => {
         item.addEventListener('click', () => onSurahClick(item.dataset.surah));
@@ -32,7 +34,8 @@ export function renderSurahListUI(list, onSurahClick) {
 }
 
 export function renderDoaListUI(list) {
-    const container = document.getElementById('doa-list-container');[cite: 1]
+    const container = document.getElementById('doa-list-container');
+    if (!container) return;
     container.innerHTML = list.map(d => `
         <div class="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 space-y-2.5">
             <div class="flex justify-between items-center">
@@ -45,17 +48,18 @@ export function renderDoaListUI(list) {
             <p class="text-xs text-emerald-700 font-medium">${d.latin}</p>
             <p class="text-xs text-slate-600 leading-relaxed">"${d.arti}"</p>
         </div>
-    `).join('');[cite: 1]
+    `).join('');
 }
 
 export function renderPrayerGridUI(j) {
-    const grid = document.getElementById('mini-prayer-schedule');[cite: 1]
+    const grid = document.getElementById('mini-prayer-schedule');
+    if (!grid) return;
     const items = [
-        { name: 'Subuh', time: j.subuh },[cite: 1]
-        { name: 'Dzuhur', time: j.dzuhur },[cite: 1]
-        { name: 'Ashar', time: j.ashar },[cite: 1]
-        { name: 'Maghrib', time: j.maghrib },[cite: 1]
-        { name: 'Isya', time: j.isya },[cite: 1]
+        { name: 'Subuh', time: j.subuh },
+        { name: 'Dzuhur', time: j.dzuhur },
+        { name: 'Ashar', time: j.ashar },
+        { name: 'Maghrib', time: j.maghrib },
+        { name: 'Isya', time: j.isya },
     ];
 
     grid.innerHTML = items.map(i => `
@@ -63,19 +67,20 @@ export function renderPrayerGridUI(j) {
             <p class="text-[10px] text-emerald-200">${i.name}</p>
             <p class="text-xs font-bold text-white mt-0.5">${i.time}</p>
         </div>
-    `).join('');[cite: 1]
+    `).join('');
 }
 
 export function renderFullPrayerScheduleUI(j) {
-    const rows = document.getElementById('full-prayer-rows');[cite: 1]
+    const rows = document.getElementById('full-prayer-rows');
+    if (!rows) return;
     const items = [
-        { name: 'Imsak', time: j.imsak || '04:35', icon: 'fa-regular fa-sun' },[cite: 1]
-        { name: 'Subuh', time: j.subuh, icon: 'fa-solid fa-sun' },[cite: 1]
-        { name: 'Terbit', time: j.terbit || '06:00', icon: 'fa-solid fa-cloud-sun' },[cite: 1]
-        { name: 'Dzuhur', time: j.dzuhur, icon: 'fa-solid fa-sun text-amber-500' },[cite: 1]
-        { name: 'Ashar', time: j.ashar, icon: 'fa-solid fa-cloud-sun text-orange-400' },[cite: 1]
-        { name: 'Maghrib', time: j.maghrib, icon: 'fa-solid fa-moon text-indigo-400' },[cite: 1]
-        { name: 'Isya', time: j.isya, icon: 'fa-regular fa-moon' },[cite: 1]
+        { name: 'Imsak', time: j.imsak || '04:35', icon: 'fa-regular fa-sun' },
+        { name: 'Subuh', time: j.subuh, icon: 'fa-solid fa-sun' },
+        { name: 'Terbit', time: j.terbit || '06:00', icon: 'fa-solid fa-cloud-sun' },
+        { name: 'Dzuhur', time: j.dzuhur, icon: 'fa-solid fa-sun text-amber-500' },
+        { name: 'Ashar', time: j.ashar, icon: 'fa-solid fa-cloud-sun text-orange-400' },
+        { name: 'Maghrib', time: j.maghrib, icon: 'fa-solid fa-moon text-indigo-400' },
+        { name: 'Isya', time: j.isya, icon: 'fa-regular fa-moon' },
     ];
 
     rows.innerHTML = items.map(i => `
@@ -86,5 +91,5 @@ export function renderFullPrayerScheduleUI(j) {
             </div>
             <span class="text-sm font-bold font-mono text-emerald-700">${i.time}</span>
         </div>
-    `).join('');[cite: 1]
+    `).join('');
 }
