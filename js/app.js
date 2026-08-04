@@ -15,13 +15,17 @@ window.addEventListener('DOMContentLoaded', () => {
 async function initApp() {
     setHijriDate();
     initEventListeners();
-    await loadPrayerSchedule(state.cityId);
-    loadDailyAyat();
-    loadDailyHadits();
-    loadSurahList();
-    renderDoaListUI(state.doaList);
-    loadHaditsBook('bukhari');
+    renderDoaListUI(state.doaList); // Render data lokal dulu
     startTimer();
+
+    // Jalankan semua API sekaligus di background secara paralel
+    Promise.all([
+        loadPrayerSchedule(state.cityId),
+        loadDailyAyat(),
+        loadDailyHadits(),
+        loadSurahList(),
+        loadHaditsBook('bukhari')
+    ]);
 }
 
 function setHijriDate() {
