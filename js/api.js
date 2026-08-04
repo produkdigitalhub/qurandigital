@@ -89,32 +89,26 @@ export async function fetchHaditsBookAPI(bookName) {
 
 export async function fetchDoaListAPI() {
     try {
-        // Menggunakan API Doa Harian Publik yang Aktif & Bebas CORS
-        const res = await fetch('https://islamic-api-zhiaa.vercel.app/api/doa');
+        const res = await fetch('https://equran.id/api/v2/doa');
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        
         const data = await res.json();
 
-        if (Array.isArray(data)) {
-            return data.map(d => ({
-                judul: d.title || d.doa || d.nama,
-                arab: d.arabic || d.ar,
-                latin: d.latin || d.tr,
-                arti: d.translation || d.idn,
-                kat: 'semua'
-            }));
-        } else if (data && data.data) {
-            return data.data.map(d => ({
-                judul: d.title || d.doa || d.nama,
-                arab: d.arabic || d.ar,
-                latin: d.latin || d.tr,
-                arti: d.translation || d.idn,
-                kat: 'semua'
+        // Mengambil array data dari respon EQuran.id
+        const listDoa = data.data || data;
+
+        if (Array.isArray(listDoa)) {
+            return listDoa.map((d, index) => ({
+                id: d.id || (index + 1),
+                judul: d.nama || d.judul || d.doa,
+                arab: d.ar || d.arab,
+                latin: d.tr || d.latin,
+                arti: d.idn || d.arti || d.terjemah,
+                kat: d.kategori || d.grup || 'umum'
             }));
         }
         return [];
     } catch (e) {
-        console.error("Gagal fetch Doa:", e);
+        console.error("Gagal fetch Doa dari EQuran.id:", e);
         return [];
     }
 }
