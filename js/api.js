@@ -1,4 +1,7 @@
 
+
+
+
 export async function fetchSurahListAPI() {
     try {
         const res = await fetch('https://equran.id/api/v2/surat');
@@ -60,3 +63,31 @@ export async function fetchDoaListAPI() {
         return [];
     }
 }
+
+// Fetch Hadis dari MyQuran API v3
+export async function fetchHaditsBookAPI(bookName) {
+    try {
+        // Range 1-20 mengambil 20 hadis pertama
+        const res = await fetch(`https://api.myquran.com/v3/hadits/${bookName}?range=1-20`);
+        const result = await res.json();
+        
+        // Cek struktur respon dari MyQuran v3
+        if (result && result.status && result.data && result.data.hadiths) {
+            return {
+                code: 200,
+                data: {
+                    hadiths: result.data.hadiths.map(h => ({
+                        number: h.number || h.no,
+                        arab: h.arab,
+                        id: h.id || h.terjemah
+                    }))
+                }
+            };
+        }
+        return null;
+    } catch (e) {
+        console.error("Gagal fetch Hadits dari MyQuran v3:", e);
+        return null;
+    }
+}
+
