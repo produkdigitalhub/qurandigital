@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NurIslam - Al-Qur'an, Hadis & Jadwal Shalat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        arabic: ['"Amiri"', 'serif'],
+                    },
+                    colors: {
+                        emerald: {
+                            50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981',
+                            600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b',
+                        },
+                        gold: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .active-tab { color: #047857; font-weight: 700; }
+        .active-tab i { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="h-full font-sans antialiased text-slate-800 bg-slate-100 flex justify-center items-center sm:py-6">
+
+    <div id="app-container" class="w-full max-w-md h-full sm:h-[90vh] sm:max-h-[850px] bg-slate-50 sm:rounded-[36px] shadow-2xl flex flex-col overflow-hidden relative border-0 sm:border-8 sm:border-slate-800">
+
+        <!-- Header Section -->
+        <header class="bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 text-white p-5 pb-6 rounded-b-[28px] shadow-lg relative z-10 flex-shrink-0">
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center space-x-2">
+                    <div class="w-9 h-9 rounded-full bg-emerald-600/50 border border-emerald-400/30 flex items-center justify-center text-amber-300 shadow-inner">
+                        <i class="fa-solid fa-kaaba text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight tracking-wide flex items-center gap-1.5">
+                            NurIslam <span class="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded-full font-medium">PRO</span>
+                        </h1>
+                        <p class="text-[11px] text-emerald-100/80" id="current-hijri-date">Loading Hijri...</p>
+                    </div>
+                </div>
+                <button id="btn-header-city" class="flex items-center space-x-1.5 bg-emerald-900/40 hover:bg-emerald-900/60 border border-emerald-500/30 px-3 py-1.5 rounded-full text-xs text-emerald-100 transition">
+                    <i class="fa-solid fa-location-dot text-amber-400"></i>
+                    <span id="header-city-name" class="font-medium max-w-[90px] truncate">Makassar</span>
+                    <i class="fa-solid fa-chevron-down text-[10px] opacity-70"></i>
+                </button>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="relative mt-2">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input type="text" id="global-search" placeholder="Cari Surah, Doa, atau Hadis..." class="w-full pl-10 pr-4 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-xs text-white placeholder-emerald-100/60 focus:outline-none focus:ring-2 focus:ring-amber-400/60 transition">
+            </div>
+        </header>
+
+        <!-- Main Scrollable Content Container -->
+        <main id="main-content" class="flex-1 overflow-y-auto p-4 space-y-5 pb-24 hide-scrollbar">
+
+            <!-- VIEW 1: DASHBOARD -->
+            <div id="view-dashboard" class="space-y-5">
+                <div class="bg-gradient-to-br from-emerald-700 to-teal-900 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 opacity-10 text-9xl font-serif text-white pointer-events-none">🕌</div>
+                    <div class="flex justify-between items-start mb-3 relative z-10">
+                        <div>
+                            <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-300 bg-amber-400/20 px-2.5 py-0.5 rounded-full border border-amber-400/30">Shalat Berikutnya</span>
+                            <h2 class="text-2xl font-extrabold mt-1" id="next-prayer-name">--:--</h2>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-emerald-200">Menuju Waktu Shalat</p>
+                            <p class="text-lg font-bold font-mono text-amber-300 mt-0.5" id="prayer-countdown">- - : - - : - -</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-5 gap-1.5 pt-3 border-t border-emerald-600/50 text-center relative z-10" id="mini-prayer-schedule">
+                        <div class="animate-pulse py-2 text-xs">Memuat...</div>
+                    </div>
+                </div>
+
+                <!-- Quick Menu -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 px-1">Menu Utama</h3>
+                    <div class="grid grid-cols-4 gap-3">
+                        <button id="btn-menu-quran" class="flex flex-col items-center justify-center p-3.5 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mb-1.5 group-hover:scale-110 transition"><i class="fa-solid fa-book-quran"></i></div>
+                            <span class="text-xs font-semibold text-slate-700">Al-Qur'an</span>
+                        </button>
+                        <button id="btn-menu-doa" class="flex flex-col items-center justify-center p-3.5 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl mb-1.5 group-hover:scale-110 transition"><i class="fa-solid fa-hands-praying"></i></div>
+                            <span class="text-xs font-semibold text-slate-700">Doa Harian</span>
+                        </button>
+                        <button id="btn-menu-hadits" class="flex flex-col items-center justify-center p-3.5 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl mb-1.5 group-hover:scale-110 transition"><i class="fa-solid fa-book-open"></i></div>
+                            <span class="text-xs font-semibold text-slate-700">Hadis</span>
+                        </button>
+                        <button id="btn-menu-sholat" class="flex flex-col items-center justify-center p-3.5 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl mb-1.5 group-hover:scale-110 transition"><i class="fa-solid fa-clock"></i></div>
+                            <span class="text-xs font-semibold text-slate-700">Jadwal</span>
+                        </button>
+                        <button id="btn-menu-tasbih" class="flex flex-col items-center justify-center p-3.5 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl mb-1.5 group-hover:scale-110 transition"><i class="fa-solid fa-dhikr"></i></div>
+                            <span class="text-xs font-semibold text-slate-700">Tasbih</span>
+                        </button>
+                        <button id="btn-menu-pagi" class="flex flex-col items-center justify-center p-3.5 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center text-xl mb-1.5 group-hover:scale-110 transition"><i class="fa-solid fa-sun"></i></div>
+                            <span class="text-xs font-semibold text-slate-700">Dzikir Pagi</span>
+                        </button>
+                        <button id="btn-menu-petang" class="flex flex-col items-center justify-center p-3.5 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl mb-1.5 group-hover:scale-110 transition"><i class="fa-solid fa-moon"></i></div>
+                            <span class="text-xs font-semibold text-slate-700">Petang</span>
+                        </button>
+                        <button id="btn-menu-kiblat" class="flex flex-col items-center justify-center p-3.5 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl mb-1.5 group-hover:scale-110 transition"><i class="fa-solid fa-compass"></i></div>
+                            <span class="text-xs font-semibold text-slate-700">Kiblat</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Daily Ayat -->
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-6 bg-emerald-600 rounded-full"></span>
+                            <h3 class="font-bold text-slate-800 text-sm">Ayat Hari Ini</h3>
+                        </div>
+                        <span id="daily-ayat-ref" class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">Q.S. Loading...</span>
+                    </div>
+                    <div id="daily-ayat-content" class="space-y-3">
+                        <div class="text-right font-arabic text-2xl leading-loose text-slate-800 pt-2" id="daily-ayat-arabic">...</div>
+                        <p class="text-xs text-slate-600 italic leading-relaxed" id="daily-ayat-translation">Sedang memuat ayat harian...</p>
+                        <div class="pt-3 border-t border-slate-100 flex justify-between items-center">
+                            <button id="daily-audio-btn" class="flex items-center space-x-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full transition">
+                                <i class="fa-solid fa-play"></i><span>Dengarkan Murottal</span>
+                            </button>
+                            <button id="btn-copy-daily" class="text-slate-400 hover:text-emerald-600 text-xs flex items-center gap-1">
+                                <i class="fa-solid fa-copy"></i> Salin
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Hadith -->
+                <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold text-amber-900 bg-amber-200/80 px-2.5 py-0.5 rounded-full">Hadis Shahih Hari Ini</span>
+                        <span class="text-xs text-amber-100" id="daily-hadits-ref">HR. Bukhari</span>
+                    </div>
+                    <p class="font-arabic text-xl text-right leading-loose my-3 text-amber-50" id="daily-hadits-arabic">...</p>
+                    <p class="text-xs text-amber-100/90 leading-relaxed line-clamp-3" id="daily-hadits-translation">Sedang memuat hadis harian...</p>
+                    <div class="mt-4 pt-3 border-t border-amber-400/40 flex justify-end">
+                        <button id="btn-more-hadits" class="text-xs font-semibold text-amber-900 bg-white hover:bg-amber-50 px-3.5 py-1.5 rounded-full transition shadow-sm">
+                            Baca Hadis Lainnya <i class="fa-solid fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: AL-QUR'AN -->
+            <div id="view-quran" class="hidden space-y-4">
+                <div class="flex justify-between items-center px-1">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">Daftar Surah Al-Qur'an</h2>
+                        <p class="text-xs text-slate-500">114 Surah lengkap audio & terjemahan</p>
+                    </div>
+                    <span class="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full font-semibold">114 Surah</span>
+                </div>
+                <div id="surah-list" class="space-y-2.5">
+                    <div class="p-4 bg-white rounded-2xl animate-pulse text-xs text-slate-400">Memuat daftar Surah...</div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: DOA HARIAN -->
+            <div id="view-doa" class="hidden space-y-4">
+                <div class="flex justify-between items-center px-1">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">Kumpulan Doa Harian</h2>
+                        <p class="text-xs text-slate-500">Doa shahih untuk aktivitas sehari-hari</p>
+                    </div>
+                </div>
+                <div class="flex space-x-2 overflow-x-auto pb-1 hide-scrollbar" id="doa-category-chips">
+                    <button data-cat="semua" class="doa-chip active px-3.5 py-1.5 bg-emerald-600 text-white rounded-full text-xs font-semibold whitespace-nowrap shadow-sm">Semua</button>
+                    <button data-cat="pagi" class="doa-chip px-3.5 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-full text-xs font-semibold whitespace-nowrap">Pagi & Petang</button>
+                    <button data-cat="sholat" class="doa-chip px-3.5 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-full text-xs font-semibold whitespace-nowrap">Sholat & Wudhu</button>
+                    <button data-cat="makan" class="doa-chip px-3.5 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-full text-xs font-semibold whitespace-nowrap">Makan & Minum</button>
+                    <button data-cat="rumah" class="doa-chip px-3.5 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-full text-xs font-semibold whitespace-nowrap">Rumah & Bepergian</button>
+                </div>
+                <div id="doa-list-container" class="space-y-3"></div>
+            </div>
+
+            <!-- VIEW 4: HADIS -->
+            <div id="view-hadits" class="hidden space-y-4">
+                <div class="flex justify-between items-center px-1">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">Kutubut Tis'ah (9 Kitab Hadis)</h2>
+                        <p class="text-xs text-slate-500">Kumpulan Hadis Shahih Rasulullah SAW</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2.5" id="hadits-books-grid">
+                    <button data-book="bukhari" class="p-3 bg-white border-2 border-emerald-500 rounded-2xl text-center shadow-sm">
+                        <p class="font-bold text-xs text-emerald-800">Bukhari</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">7.008 Hadis</p>
+                    </button>
+                    <button data-book="muslim" class="p-3 bg-white border border-slate-200 rounded-2xl text-center shadow-sm hover:border-emerald-500">
+                        <p class="font-bold text-xs text-slate-800">Muslim</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">5.362 Hadis</p>
+                    </button>
+                    <button data-book="tirmidzi" class="p-3 bg-white border border-slate-200 rounded-2xl text-center shadow-sm hover:border-emerald-500">
+                        <p class="font-bold text-xs text-slate-800">Tirmidzi</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">3.956 Hadis</p>
+                    </button>
+                </div>
+                <div id="hadits-feed-container" class="space-y-3"></div>
+            </div>
+
+            <!-- VIEW 5: JADWAL SHALAT -->
+            <div id="view-sholat" class="hidden space-y-4">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                    <h3 class="text-sm font-bold text-slate-800 mb-2">Pilih Lokasi Kabupaten / Kota</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="city-search-input" placeholder="Ketik nama kota..." class="flex-1 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <button id="btn-search-city" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700 transition">Cari</button>
+                    </div>
+                    <div id="city-search-results" class="mt-2 space-y-1 max-h-36 overflow-y-auto text-xs"></div>
+                </div>
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-base" id="full-schedule-city">Kota Makassar</h3>
+                            <p class="text-xs text-slate-500" id="full-schedule-date">--</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg"><i class="fa-solid fa-mosque"></i></div>
+                    </div>
+                    <div class="space-y-2" id="full-prayer-rows"></div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Surah Modal -->
+        <div id="surah-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex justify-center items-end sm:items-center">
+            <div class="bg-slate-50 w-full max-w-md h-[90vh] sm:h-[80vh] rounded-t-[32px] sm:rounded-[32px] flex flex-col overflow-hidden shadow-2xl">
+                <div class="p-4 bg-emerald-800 text-white flex justify-between items-center flex-shrink-0">
+                    <div>
+                        <h3 class="font-bold text-base" id="modal-surah-title">Nama Surah</h3>
+                        <p class="text-xs text-emerald-200" id="modal-surah-subtitle">Arti & Ayat</p>
+                    </div>
+                    <button id="btn-close-surah-modal" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="modal-verses-container" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+            </div>
+        </div>
+
+        <!-- Tasbih Modal -->
+        <div id="tasbih-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex justify-center items-center p-4">
+            <div class="bg-white w-full max-w-xs rounded-3xl p-6 text-center shadow-2xl space-y-5">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full">Tasbih Digital</span>
+                    <button id="btn-close-tasbih-modal" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 mb-1">Target: 33 Hitungan</p>
+                    <p id="tasbih-phrase" class="font-arabic text-2xl font-bold text-slate-800">Subhanallah</p>
+                    <p id="tasbih-latin" class="text-xs text-slate-500 mt-1">Maha Suci Allah</p>
+                </div>
+                <button id="btn-count-tasbih" class="w-32 h-32 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white mx-auto flex flex-col items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition">
+                    <span id="tasbih-count" class="text-4xl font-extrabold font-mono">0</span>
+                    <span class="text-[10px] text-purple-200 uppercase tracking-widest mt-1">Ketuk</span>
+                </button>
+                <div class="flex justify-center space-x-3 pt-2">
+                    <button id="btn-reset-tasbih" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-semibold transition"><i class="fa-solid fa-rotate-left mr-1"></i> Reset</button>
+                    <button id="btn-next-tasbih" class="px-3.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-semibold transition">Ganti Lafaz <i class="fa-solid fa-arrows-rotate ml-1"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Nav -->
+        <nav class="bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-4 py-2.5 flex justify-between items-center absolute bottom-0 left-0 right-0 z-30 shadow-lg">
+            <button id="nav-dashboard" class="nav-item active-tab flex flex-col items-center space-y-1 text-slate-400 transition"><i class="fa-solid fa-house text-lg"></i><span class="text-[10px] font-medium">Beranda</span></button>
+            <button id="nav-quran" class="nav-item flex flex-col items-center space-y-1 text-slate-400 transition"><i class="fa-solid fa-book-quran text-lg"></i><span class="text-[10px] font-medium">Al-Qur'an</span></button>
+            <button id="nav-float-tasbih" class="w-12 h-12 bg-gradient-to-tr from-emerald-600 to-teal-500 text-white rounded-full flex items-center justify-center text-xl shadow-lg shadow-emerald-600/30 -mt-6 hover:scale-105 active:scale-95 transition"><i class="fa-solid fa-dhikr"></i></button>
+            <button id="nav-doa" class="nav-item flex flex-col items-center space-y-1 text-slate-400 transition"><i class="fa-solid fa-hands-praying text-lg"></i><span class="text-[10px] font-medium">Doa</span></button>
+            <button id="nav-hadits" class="nav-item flex flex-col items-center space-y-1 text-slate-400 transition"><i class="fa-solid fa-book-open text-lg"></i><span class="text-[10px] font-medium">Hadis</span></button>
+        </nav>
+
+        <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-xl text-xs shadow-xl transition-all duration-300 opacity-0 pointer-events-none z-50">Pesan Toast</div>
+
+    </div>
+
+    <!-- Panggil Entry Point Module JavaScript -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
