@@ -87,26 +87,26 @@ export async function fetchHaditsBookAPI(bookName) {
 // 4. DOA HARIAN API (Ganti ke Endpoint Doa Publik Bebas CORS)
 // ==========================================
 
+// 4. DOA HARIAN API (EQuran.id)
 export async function fetchDoaListAPI() {
     try {
-        const res = await fetch('https://equran.id/api/v2/doa');
+        // Menggunakan endpoint sesuai dokumentasi gambar: https://equran.id/api/doa
+        const res = await fetch('https://equran.id/api/doa');
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        
         const data = await res.json();
 
-        // Mengambil array data dari respon EQuran.id
-        const listDoa = data.data || data;
+        // Data berupa array dari API
+        const listDoa = Array.isArray(data) ? data : (data.data || []);
 
-        if (Array.isArray(listDoa)) {
-            return listDoa.map((d, index) => ({
-                id: d.id || (index + 1),
-                judul: d.nama || d.judul || d.doa,
-                arab: d.ar || d.arab,
-                latin: d.tr || d.latin,
-                arti: d.idn || d.arti || d.terjemah,
-                kat: d.kategori || d.grup || 'umum'
-            }));
-        }
-        return [];
+        return listDoa.map((d, index) => ({
+            id: d.id || (index + 1),
+            judul: d.nama || d.judul || 'Tanpa Judul',
+            arab: d.ar || d.arab || '',
+            latin: d.tr || d.latin || '',
+            arti: d.idn || d.arti || d.terjemah || '',
+            kat: d.grup || d.kategori || 'Umum'
+        }));
     } catch (e) {
         console.error("Gagal fetch Doa dari EQuran.id:", e);
         return [];
