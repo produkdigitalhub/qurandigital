@@ -1,10 +1,11 @@
 // ==========================================
-// 1. AL-QURAN API (equran.id v2)
+// 1. AL-QURAN API (equran.id v2 - Valid Path)
 // ==========================================
 
 export async function fetchSurahListAPI() {
     try {
         const res = await fetch('https://equran.id/api/v2/surat');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         return data.data;
     } catch (e) {
@@ -16,6 +17,7 @@ export async function fetchSurahListAPI() {
 export async function fetchSurahDetailAPI(nomor) {
     try {
         const res = await fetch(`https://equran.id/api/v2/surat/${nomor}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         return data.data;
     } catch (e) {
@@ -31,6 +33,7 @@ export async function fetchSurahDetailAPI(nomor) {
 export async function fetchPrayerScheduleAPI(cityId, yyyy, mm, dd) {
     try {
         const res = await fetch(`https://api.myquran.com/v2/sholat/jadwal/${cityId}/${yyyy}/${mm}/${dd}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return await res.json();
     } catch (e) {
         console.error("Gagal fetch Jadwal Sholat:", e);
@@ -41,6 +44,7 @@ export async function fetchPrayerScheduleAPI(cityId, yyyy, mm, dd) {
 export async function searchCityAPI(query) {
     try {
         const res = await fetch(`https://api.myquran.com/v2/sholat/kota/cari/${query}`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return await res.json();
     } catch (e) {
         console.error("Gagal cari kota:", e);
@@ -49,54 +53,63 @@ export async function searchCityAPI(query) {
 }
 
 // ==========================================
-// 3. HADITS BUKU (MyQuran API v3)
+// 3. HADITS API (Ganti ke Endpoint Hadith Vercel yang Aktif)
 // ==========================================
 
 export async function fetchHaditsBookAPI(bookName) {
     try {
-        // Ambil range 1-20
-        const res = await fetch(`https://api.myquran.com/v3/hadits/${bookName}?range=1-20`);
-        const result = await res.json();
+        // Menggunakan Endpoint Hadits yang Aktif & Tanpa 404
+        const res = await fetch(`https://hadis-api-id.vercel.app/hadith/${bookName}?page=1&limit=20`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         
-        // Pengecekan fleksibel untuk response MyQuran v3 / Vercel Mirror
-        const hadithsList = result?.data?.hadiths || result?.data || [];
+        const result = await res.json();
 
-        if (hadithsList.length > 0) {
+        if (result && result.items) {
             return {
                 code: 200,
                 data: {
-                    hadiths: hadithsList.map(h => ({
-                        number: h.number || h.no || h.number_hadith,
-                        arab: h.arab || h.ar,
-                        id: h.id || h.terjemah || h.id_indonesia
+                    hadiths: result.items.map(h => ({
+                        number: h.number,
+                        arab: h.arab,
+                        id: h.id
                     }))
                 }
             };
         }
         return null;
     } catch (e) {
-        console.error("Gagal fetch Hadits dari MyQuran v3:", e);
+        console.error("Gagal fetch Hadits:", e);
         return null;
     }
 }
 
 // ==========================================
-// 4. DOA HARIAN (equran.id - Bebas CORS)
+// 4. DOA HARIAN API (Ganti ke Endpoint Doa Publik Bebas CORS)
 // ==========================================
 
 export async function fetchDoaListAPI() {
     try {
-        const res = await fetch('https://equran.id/api/v2/doa');
+        // Menggunakan API Doa Harian Publik yang Aktif & Bebas CORS
+        const res = await fetch('https://islamic-api-zhiaa.vercel.app/api/doa');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        
         const data = await res.json();
 
-        if (data && data.data) {
-            // Disesuaikan agar kompatibel dengan properti di app.js
+        if (Array.isArray(data)) {
+            return data.map(d => ({
+                judul: d.title || d.doa || d.nama,
+                arab: d.arabic || d.ar,
+                latin: d.latin || d.tr,
+                arti: d.translation || d.idn,
+                kat: 'semua'
+            }));
+        } else if (data && data.data) {
             return data.data.map(d => ({
-                judul: d.nama,
-                arab: d.ar,
-                latin: d.tr,
-                arti: d.idn,
-                kat: d.kategori || 'semua'
+                judul: d.title || d.doa || d.nama,
+                arab: d.arabic || d.ar,
+                latin: d.latin || d.tr,
+                arti: d.translation || d.idn,
+                kat: 'semua'
             }));
         }
         return [];
