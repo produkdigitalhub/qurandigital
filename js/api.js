@@ -51,10 +51,26 @@ export async function searchCityAPI(query) {
 }
 
 // Panggilan ke API Hadis
+// Panggilan ke API Hadis (Menggunakan API MyQuran sebagai cadangan)
 export async function fetchHaditsBookAPI(bookName) {
     try {
-        const res = await fetch(`https://api.hadith.gading.dev/books/${bookName}?range=1-5`);
-        return await res.json();
+        // Menggunakan API Hadis MyQuran yang aktif
+        const res = await fetch(`https://api.myquran.com/v2/hadits/arbain/semua`);
+        const data = await res.json();
+        if (data && data.status) {
+            return {
+                code: 200,
+                data: {
+                    hadiths: data.data.map(item => ({
+                        number: item.no,
+                        arab: item.arab,
+                        id: item.indo,
+                        judul: item.judul
+                    }))
+                }
+            };
+        }
+        return null;
     } catch (err) {
         console.error("Gagal mengambil hadis:", err);
         return null;
