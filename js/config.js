@@ -1,6 +1,6 @@
 export const state = {
     activeTab: 'dashboard',
-    cityId: '1609', // Default: Makassar
+    cityId: '2223', // Default: Makassar
     cityName: 'Kota Makassar',
     prayerData: null,
     nextPrayerTime: null,
