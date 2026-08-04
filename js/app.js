@@ -394,6 +394,9 @@ function initEventListeners() {
         document.getElementById('surah-modal')?.classList.add('hidden');
     });
 
+
+
+    
     // Pencarian Kota
     document.getElementById('btn-search-city')?.addEventListener('click', async () => {
         const input = document.getElementById('city-search-input');
@@ -418,4 +421,56 @@ function initEventListeners() {
             });
         }
     });
+}
+
+// Fungsi Menghitung Arah Kiblat berdasarkan Lintang (lat) dan Bujur (lng)
+function calculateQiblaBearing(lat, lng) {
+    const kaabaLat = 21.422487 * (Math.PI / 180);
+    const kaabaLng = 39.826206 * (Math.PI / 180);
+    
+    const myLat = lat * (Math.PI / 180);
+    const myLng = lng * (Math.PI / 180);
+    
+    const dLng = kaabaLng - myLng;
+    
+    const y = Math.sin(dLng);
+    const x = Math.cos(myLat) * Math.tan(kaabaLat) - Math.sin(myLat) * Math.cos(dLng);
+    
+    let qibla = Math.atan2(y, x) * (180 / Math.PI);
+    return (qibla + 360) % 360;
+}
+
+// Fungsi Mengaktifkan Sensor Arah HP
+function initCompass() {
+    // Default Koordinat Makassar (Jika GPS mati)
+    let userLat = -5.14766;
+    let userLng = 119.43273;
+    let qiblaBearing = calculateQiblaBearing(userLat, userLng);
+
+    // Coba Ambil GPS Pengguna secara otomatis
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((pos) => {
+            userLat = pos.coords.latitude;
+            userLng = pos.coords.longitude;
+            qiblaBearing = calculateQiblaBearing(userLat, userLng);
+            
+            const degInfo = document.getElementById('kiblat-degree-info');
+            if (degInfo) degInfo.innerText = `Arah Kiblat: ~${Math.round(qiblaBearing)}° N-W`;
+        });
+    }
+
+    // Atur rotasi panah Kiblat awal
+    const pointer = document.getElementById('qibla-pointer');
+    if (pointer) pointer.style.transform = `rotate(${qiblaBearing}deg)`;
+
+    // Dengarkan rotasi gyroscope HP
+    if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', (e) => {
+            let heading = e.webkitCompassHeading || (360 - e.alpha);
+            if (heading) {
+                const dial = document.getElementById('compass-dial');
+                if (dial) dial.style.transform = `rotate(${-heading}deg)`;
+            }
+        });
+    }
 }
