@@ -1,9 +1,17 @@
-// Panggilan ke API EQuran.id
 export async function fetchSurahListAPI() {
+    // 1. Cek apakah sudah ada data tersimpan di browser
+    const cached = localStorage.getItem('surah_list');
+    if (cached) return JSON.parse(cached);
+
     try {
         const res = await fetch('https://equran.id/api/v2/surat');
         const data = await res.json();
-        return data.code === 200 ? data.data : [];
+        if (data.code === 200) {
+            // 2. Simpan ke cache jika sukses
+            localStorage.setItem('surah_list', JSON.stringify(data.data));
+            return data.data;
+        }
+        return [];
     } catch (err) {
         console.error("Gagal mengambil data surah:", err);
         return [];
