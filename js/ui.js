@@ -33,23 +33,6 @@ export function renderSurahListUI(list, onSurahClick) {
     });
 }
 
-export function renderDoaListUI(list) {
-    const container = document.getElementById('doa-list-container');
-    if (!container) return;
-    container.innerHTML = list.map(d => `
-        <div class="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 space-y-2.5">
-            <div class="flex justify-between items-center">
-                <span class="text-xs font-bold text-emerald-800">${d.judul}</span>
-                <button onclick="navigator.clipboard.writeText('${d.arab}\\n\\n${d.arti}');" class="text-slate-400 hover:text-emerald-600 text-xs">
-                    <i class="fa-solid fa-copy"></i>
-                </button>
-            </div>
-            <p class="text-right font-arabic text-xl leading-loose text-slate-800">${d.arab}</p>
-            <p class="text-xs text-emerald-700 font-medium">${d.latin}</p>
-            <p class="text-xs text-slate-600 leading-relaxed">"${d.arti}"</p>
-        </div>
-    `).join('');
-}
 
 export function renderPrayerGridUI(j) {
     const grid = document.getElementById('mini-prayer-schedule');
@@ -103,23 +86,23 @@ export function renderDoaListUI(doaArray) {
     if (!doaArray || doaArray.length === 0) {
         container.innerHTML = `
             <div class="p-8 text-center text-slate-400 text-xs bg-white rounded-2xl border border-slate-100">
-                Memuat data doa atau tidak ada doa yang ditemukan...
+                Tidak ada doa yang ditemukan.
             </div>`;
         return;
     }
 
     container.innerHTML = `
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <!-- Information Bar -->
+            <!-- Header Ringkasan -->
             <div class="p-3.5 bg-slate-50 border-b border-slate-100 flex justify-between items-center text-xs text-slate-500 font-medium">
-                <span>Total: <b class="text-emerald-600 font-bold">${doaArray.length}</b> Doa (Sumber: EQuran.id)</span>
-                <span class="text-[10px] text-slate-400">*Klik baris untuk detail</span>
+                <span>Total: <b class="text-emerald-600 font-bold">${doaArray.length}</b> Doa</span>
+                <span class="text-[10px] text-slate-400">*Klik baris untuk melihat teks Arab & Arti</span>
             </div>
 
-            <!-- Tabel / List Doa -->
-            <div class="divide-y divide-slate-100 max-h-[650px] overflow-y-auto">
+            <!-- List Doa Model Tabel Accordion -->
+            <div class="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
                 ${doaArray.map((item, idx) => `
-                    <details class="group transition-all duration-200">
+                    <details class="group transition-all duration-150">
                         <summary class="flex items-center justify-between p-3.5 hover:bg-emerald-50/50 cursor-pointer select-none list-none">
                             <div class="flex items-center space-x-3 pr-2">
                                 <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center justify-center flex-shrink-0">
@@ -129,7 +112,7 @@ export function renderDoaListUI(doaArray) {
                                     <h4 class="text-xs font-semibold text-slate-800 group-open:text-emerald-600 transition-colors">
                                         ${item.judul}
                                     </h4>
-                                    <span class="inline-block mt-0.5 text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                                    <span class="inline-block mt-0.5 text-[9px] font-medium text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">
                                         ${item.kat}
                                     </span>
                                 </div>
@@ -137,10 +120,9 @@ export function renderDoaListUI(doaArray) {
                             <i class="fa-solid fa-chevron-down text-slate-300 text-xs transition-transform duration-200 group-open:rotate-180"></i>
                         </summary>
 
-                        <!-- Detail Arab, Latin & Arti -->
-                        <div class="p-4 bg-slate-50/60 border-t border-slate-100 space-y-3">
-                            ${item.arab ? `<p class="text-right font-arabic text-xl leading-loose text-slate-800">${item.arab}</p>` : ''}
-                            ${item.latin ? `<p class="text-xs text-emerald-700 font-medium leading-relaxed">${item.latin}</p>` : ''}
+                        <div class="p-4 bg-slate-50/70 border-t border-slate-100 space-y-3">
+                            ${item.arab ? `<p class="text-right font-arabic text-2xl leading-loose text-slate-800">${item.arab}</p>` : ''}
+                            ${item.latin ? `<p class="text-xs text-emerald-700 font-medium leading-relaxed italic">${item.latin}</p>` : ''}
                             ${item.arti ? `<p class="text-xs text-slate-600 leading-relaxed">${item.arti}</p>` : ''}
                         </div>
                     </details>
