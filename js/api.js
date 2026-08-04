@@ -1,3 +1,32 @@
+// Panggilan ke API Doa EQuran.id (228 Doa & Dzikir)
+export async function fetchDoaListAPI(grup = '') {
+    try {
+        const url = grup 
+            ? `https://equran.id/api/doa?grup=${encodeURIComponent(grup)}`
+            : `https://equran.id/api/doa`;
+
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        // Cek struktur respon API
+        const doaData = Array.isArray(data) ? data : (data.data || []);
+        
+        return doaData.map((d, index) => ({
+            id: d.id || index + 1,
+            judul: d.nama || d.judul || d.title,
+            arab: d.ar || d.arab || d.arabic,
+            latin: d.tr || d.latin,
+            arti: d.idn || d.arti || d.indonesian,
+            kat: d.grup || d.kategori || 'umum',
+            tag: d.tag || []
+        }));
+    } catch (err) {
+        console.error("Gagal mengambil daftar doa:", err);
+        return null;
+    }
+}
+
+
 export async function fetchSurahListAPI() {
     // 1. Cek apakah sudah ada data tersimpan di browser
     const cached = localStorage.getItem('surah_list');
