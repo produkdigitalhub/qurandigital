@@ -94,6 +94,16 @@ function filterDoa(kat) {
     }
 }
 
+// js/app.js load doa
+
+async function loadAllDoa() {
+    const apiDoa = await fetchDoaListAPI();
+    if (apiDoa && apiDoa.length > 0) {
+        state.doaList = apiDoa;
+        renderDoaListUI(state.doaList);
+    }
+}
+
 // 2. JADWAL SHOLAT
 async function loadPrayerSchedule(cityId) {
     const now = new Date();
