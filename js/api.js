@@ -1,5 +1,13 @@
-// Panggilan ke API Doa EQuran.id (228 Doa & Dzikir)
+// ==========================================
+// 1. API DOA & DZIKIR (EQuran.id)
+// ==========================================
 export async function fetchDoaListAPI(grup = '') {
+    // 1. Cek Cache LocalStorage jika tanpa parameter grup
+    if (!grup) {
+        const cached = localStorage.getItem('doa_list_cache');
+        if (cached) return JSON.parse(cached);
+    }
+
     try {
         const url = grup 
             ? `https://equran.id/api/doa?grup=${encodeURIComponent(grup)}`
@@ -8,10 +16,9 @@ export async function fetchDoaListAPI(grup = '') {
         const res = await fetch(url);
         const data = await res.json();
         
-        // Cek struktur respon API
         const doaData = Array.isArray(data) ? data : (data.data || []);
         
-        return doaData.map((d, index) => ({
+        const result = doaData.map((d, index) => ({
             id: d.id || index + 1,
             judul: d.nama || d.judul || d.title,
             arab: d.ar || d.arab || d.arabic,
@@ -20,15 +27,23 @@ export async function fetchDoaListAPI(grup = '') {
             kat: d.grup || d.kategori || 'umum',
             tag: d.tag || []
         }));
+
+        // Simpan ke Cache jika ini fetch full list
+        if (!grup && result.length > 0) {
+            localStorage.setItem('doa_list_cache', JSON.stringify(result));
+        }
+
+        return result;
     } catch (err) {
         console.error("Gagal mengambil daftar doa:", err);
         return null;
     }
 }
 
-
+// ==========================================
+// 2. API AL-QUR'AN (EQuran.id v2)
+// ==========================================
 export async function fetchSurahListAPI() {
-    // 1. Cek apakah sudah ada data tersimpan di browser
     const cached = localStorage.getItem('surah_list');
     if (cached) return JSON.parse(cached);
 
@@ -36,7 +51,6 @@ export async function fetchSurahListAPI() {
         const res = await fetch('https://equran.id/api/v2/surat');
         const data = await res.json();
         if (data.code === 200) {
-            // 2. Simpan ke cache jika sukses
             localStorage.setItem('surah_list', JSON.stringify(data.data));
             return data.data;
         }
@@ -58,7 +72,9 @@ export async function fetchSurahDetailAPI(nomor) {
     }
 }
 
-// Panggilan ke API Jadwal Shalat
+// ==========================================
+// 3. API JADWAL SHOLAT (MyQuran v2)
+// ==========================================
 export async function fetchPrayerScheduleAPI(cityId, yyyy, mm, dd) {
     try {
         const res = await fetch(`https://api.myquran.com/v2/sholat/jadwal/${cityId}/${yyyy}/${mm}/${dd}`);
@@ -71,7 +87,7 @@ export async function fetchPrayerScheduleAPI(cityId, yyyy, mm, dd) {
 
 export async function searchCityAPI(query) {
     try {
-        const res = await fetch(`https://api.myquran.com/v2/sholat/kota/cari/${query}`);
+        const res = await fetch(`https://api.myquran.com/v2/sholat/kota/cari/${encodeURIComponent(query)}`);
         return await res.json();
     } catch (err) {
         console.error("Gagal mencari kota:", err);
@@ -79,12 +95,17 @@ export async function searchCityAPI(query) {
     }
 }
 
-// Panggilan ke API Hadis
-// Panggilan ke API Hadis (Menggunakan API MyQuran sebagai cadangan)
-export async function fetchHaditsBookAPI(bookName) {
+// ==========================================
+// 4. API HADITS (MyQuran v2)
+// ==========================================
+export async function fetchHaditsBookAPI(bookName = 'arbain') {
     try {
-        // Menggunakan API Hadis MyQuran yang aktif
-        const res = await fetch(`https://api.myquran.com/v2/hadits/arbain/semua`);
+        // Mendukung endpoints MyQuran Hadits (Default ke Hadits Arbain)
+        const endpoint = bookName === 'arbain' 
+            ? 'https://api.myquran.com/v2/hadits/arbain/semua'
+            : `https://api.myquran.com/v2/hadits/arbain/semua`;
+
+        const res = await fetch(endpoint);
         const data = await res.json();
         if (data && data.status) {
             return {
