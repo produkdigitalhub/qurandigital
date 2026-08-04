@@ -1,7 +1,8 @@
 import { state } from './config.js';
 import { 
     fetchSurahListAPI, fetchSurahDetailAPI, 
-    fetchPrayerScheduleAPI, searchCityAPI, fetchHaditsBookAPI 
+    fetchPrayerScheduleAPI, searchCityAPI, fetchHaditsBookAPI,
+    fetchDoaListAPI 
 } from './api.js';
 import { 
     showToast, renderSurahListUI, renderDoaListUI, 
@@ -15,16 +16,19 @@ window.addEventListener('DOMContentLoaded', () => {
 async function initApp() {
     setHijriDate();
     initEventListeners();
-    renderDoaListUI(state.doaList); // Render data lokal dulu
+    
+    // Render data lokal bawaan terlebih dahulu
+    renderDoaListUI(state.doaList); 
     startTimer();
 
-    // Jalankan semua API sekaligus di background secara paralel
+    // Jalankan semua API secara paralel
     Promise.all([
         loadPrayerSchedule(state.cityId),
         loadDailyAyat(),
         loadDailyHadits(),
         loadSurahList(),
-        loadHaditsBook('bukhari')
+        loadHaditsBook('bukhari'),
+        loadAllDoa()
     ]);
 }
 
@@ -60,6 +64,34 @@ function switchTab(tabName, filterParam = null) {
     }
 }
 
+// ==========================================
+// 1. DATA DOA
+// ==========================================
+async function loadAllDoa() {
+    const apiDoa = await fetchDoaListAPI();
+    if (apiDoa && apiDoa.length > 0) {
+        state.doaList = apiDoa;
+        renderDoaListUI(state.doaList);
+    }
+}
+
+function filterDoa(kat) {
+    if (!state.doaList) return;
+    
+    if (kat === 'semua' || !kat) {
+        renderDoaListUI(state.doaList);
+    } else {
+        const filtered = state.doaList.filter(d => {
+            const itemKat = (d.kat || '').toLowerCase();
+            return itemKat.includes(kat.toLowerCase());
+        });
+        renderDoaListUI(filtered);
+    }
+}
+
+// ==========================================
+// 2. JADWAL SHOLAT
+// ==========================================
 async function loadPrayerSchedule(cityId) {
     const now = new Date();
     const yyyy = now.getFullYear();
@@ -136,6 +168,9 @@ function startTimer() {
     }, 1000);
 }
 
+// ==========================================
+// 3. QURAN & HADITS
+// ==========================================
 async function loadDailyAyat() {
     const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
     const surahNo = (dayOfYear % 114) + 1;
@@ -156,37 +191,13 @@ async function loadDailyAyat() {
 
 async function loadDailyHadits() {
     const data = await fetchHaditsBookAPI('bukhari');
-    const arabEl = document.getElementById('daily-hadits-arabic');
-    const transEl = document.getElementById('daily-hadits-translation');
-
     if (data && data.code === 200 && data.data.hadiths.length > 0) {
         const h = data.data.hadiths[0];
+        const arabEl = document.getElementById('daily-hadits-arabic');
+        const transEl = document.getElementById('daily-hadits-translation');
+
         if (arabEl) arabEl.innerText = h.arab ? h.arab.substring(0, 150) + '...' : '';
         if (transEl) transEl.innerText = h.id || '';
-    } else {
-        if (arabEl) arabEl.innerText = 'Hadits pilihan hari ini.';
-        if (transEl) transEl.innerText = 'Niat adalah landasan utama dalam setiap amalan.';
-    }
-}
-
-async function loadHaditsBook(bookName) {
-    const container = document.getElementById('hadits-feed-container');
-    if (!container) return;
-    container.innerHTML = '<div class="p-4 text-center text-xs text-slate-400 animate-pulse">Memuat data hadis...</div>';
-
-    const data = await fetchHaditsBookAPI(bookName);
-    if (data && data.code === 200 && data.data.hadiths.length > 0) {
-        container.innerHTML = data.data.hadiths.map(h => `
-            <div class="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 space-y-2.5">
-                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                    <span class="text-xs font-bold text-emerald-700 uppercase">${h.judul || 'Hadits No. ' + h.number}</span>
-                </div>
-                <p class="text-right font-arabic text-xl leading-loose text-slate-800">${h.arab}</p>
-                <p class="text-xs text-slate-600 leading-relaxed">${h.id}</p>
-            </div>
-        `).join('');
-    } else {
-        container.innerHTML = '<div class="p-4 text-center text-xs text-amber-600">Gagal memuat data hadits. Silakan periksa koneksi internet Anda.</div>';
     }
 }
 
@@ -233,111 +244,96 @@ async function openSurahModal(nomor) {
     }
 }
 
+// SATU-SATUNYA DEKLARASI loadHaditsBook
 async function loadHaditsBook(bookName) {
     const container = document.getElementById('hadits-feed-container');
     if (!container) return;
     container.innerHTML = '<div class="p-4 text-center text-xs text-slate-400 animate-pulse">Memuat data hadis...</div>';
 
     const data = await fetchHaditsBookAPI(bookName);
-    if (data && data.code === 200) {
+    if (data && data.code === 200 && data.data.hadiths.length > 0) {
         container.innerHTML = data.data.hadiths.map(h => `
             <div class="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 space-y-2.5">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                    <span class="text-xs font-bold text-blue-700 uppercase">HR. ${bookName} No. ${h.number}</span>
+                    <span class="text-xs font-bold text-emerald-700 uppercase">${h.judul || 'HR. ' + bookName + ' No. ' + h.number}</span>
                 </div>
                 <p class="text-right font-arabic text-xl leading-loose text-slate-800">${h.arab}</p>
                 <p class="text-xs text-slate-600 leading-relaxed">${h.id}</p>
             </div>
         `).join('');
+    } else {
+        container.innerHTML = '<div class="p-4 text-center text-xs text-amber-600">Gagal memuat data hadits.</div>';
     }
 }
 
-function filterDoa(kat) {
-    if (kat === 'semua') renderDoaListUI(state.doaList);
-    else renderDoaListUI(state.doaList.filter(d => d.kat === kat));
-}
-
+// ==========================================
+// 4. EVENT LISTENERS
+// ==========================================
 function initEventListeners() {
-// ==========================================
-// PENCARIAN GLOBAL (Surah, Doa, & Hadits)
-// ==========================================
-// Ambil input berdasarkan placeholder atau tag input di header
-const globalSearchInput = document.querySelector('input[placeholder*="Cari Surah"]');
+    // Pencarian Global
+    const globalSearchInput = document.querySelector('input[placeholder*="Cari Surah"]');
+    if (globalSearchInput) {
+        globalSearchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
 
-if (globalSearchInput) {
-    globalSearchInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase().trim();
-
-        // 1. Filter Surah (Al-Qur'an)
-        if (state.surahList && state.surahList.length > 0) {
-            const filteredSurah = state.surahList.filter(s => 
-                s.namaLatin.toLowerCase().includes(query) ||
-                s.nama.toLowerCase().includes(query) ||
-                s.nomor.toString() === query
-            );
-            renderSurahListUI(filteredSurah, openSurahModal);
-        }
-
-        // 2. Filter Doa
-       // Perbarui event listener tombol filter doa di js/app.js
-document.querySelectorAll('.doa-filter-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-        // Styling tombol aktif
-        document.querySelectorAll('.doa-filter-btn').forEach(b => {
-            b.classList.remove('bg-emerald-600', 'text-white', 'shadow-sm');
-            b.classList.add('bg-slate-100', 'text-slate-600');
-        });
-        e.target.classList.remove('bg-slate-100', 'text-slate-600');
-        e.target.classList.add('bg-emerald-600', 'text-white', 'shadow-sm');
-
-        const kat = e.target.dataset.kat;
-
-        // Ambil data dari API atau filter lokal
-        if (kat === 'semua') {
-            renderDoaListUI(state.doaList);
-        } else {
-            // Ambil dari API berdasarkan query parameter 'grup'
-            const filteredApi = await fetchDoaListAPI(kat);
-            if (filteredApi && filteredApi.length > 0) {
-                renderDoaListUI(filteredApi);
-            } else {
-                // Fallback filter lokal jika server slow
-                const filtered = state.doaList.filter(d => 
-                    d.kat.toLowerCase().includes(kat.toLowerCase())
+            if (state.surahList && state.surahList.length > 0) {
+                const filteredSurah = state.surahList.filter(s => 
+                    s.namaLatin.toLowerCase().includes(query) ||
+                    s.nama.toLowerCase().includes(query) ||
+                    s.nomor.toString() === query
                 );
-                renderDoaListUI(filtered);
+                renderSurahListUI(filteredSurah, openSurahModal);
             }
-        }
-    });
-});
 
-        // 3. Filter Hadits (yang tampil di DOM)
-        const haditsCards = document.querySelectorAll('#hadits-feed-container > div');
-        haditsCards.forEach(card => {
-            const text = card.innerText.toLowerCase();
-            if (text.includes(query)) {
-                card.classList.remove('hidden');
-            } else {
-                card.classList.add('hidden');
+            if (state.doaList && state.doaList.length > 0) {
+                const filteredDoa = state.doaList.filter(d => 
+                    (d.judul && d.judul.toLowerCase().includes(query)) ||
+                    (d.latin && d.latin.toLowerCase().includes(query)) ||
+                    (d.arti && d.arti.toLowerCase().includes(query))
+                );
+                renderDoaListUI(filteredDoa);
+            }
+
+            const haditsCards = document.querySelectorAll('#hadits-feed-container > div');
+            haditsCards.forEach(card => {
+                const text = card.innerText.toLowerCase();
+                if (text.includes(query)) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            if (query.length > 0 && state.activeTab === 'dashboard') {
+                switchTab('quran');
             }
         });
+    }
 
-        // (Opsional) Otomatis pindah ke tab 'quran' jika pengguna mulai mengetik di dashboard
-        if (query.length > 0 && state.activeTab === 'dashboard') {
-            switchTab('quran');
-        }
+    // Filter Kategori Doa (Chips)
+    document.querySelectorAll('.doa-filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.doa-filter-btn').forEach(b => {
+                b.classList.remove('bg-emerald-600', 'text-white', 'shadow-sm');
+                b.classList.add('bg-slate-100', 'text-slate-600');
+            });
+            const target = e.currentTarget;
+            target.classList.remove('bg-slate-100', 'text-slate-600');
+            target.classList.add('bg-emerald-600', 'text-white', 'shadow-sm');
+
+            const kat = target.dataset.kat;
+            filterDoa(kat);
+        });
     });
-}
 
-    
-    // Navigation
+    // Navigasi
     document.getElementById('nav-dashboard')?.addEventListener('click', () => switchTab('dashboard'));
     document.getElementById('nav-quran')?.addEventListener('click', () => switchTab('quran'));
     document.getElementById('nav-doa')?.addEventListener('click', () => switchTab('doa'));
     document.getElementById('nav-hadits')?.addEventListener('click', () => switchTab('hadits'));
     document.getElementById('btn-header-city')?.addEventListener('click', () => switchTab('sholat'));
 
-    // Dashboard Menus
+    // Dashboard
     document.getElementById('btn-menu-quran')?.addEventListener('click', () => switchTab('quran'));
     document.getElementById('btn-menu-doa')?.addEventListener('click', () => switchTab('doa'));
     document.getElementById('btn-menu-hadits')?.addEventListener('click', () => switchTab('hadits'));
@@ -346,7 +342,7 @@ document.querySelectorAll('.doa-filter-btn').forEach(btn => {
     document.getElementById('btn-menu-petang')?.addEventListener('click', () => switchTab('doa', 'petang'));
     document.getElementById('btn-menu-kiblat')?.addEventListener('click', () => showToast("Arah Kiblat Indonesia ~294° N-W."));
 
-    // Tasbih Modals
+    // Tasbih Modal
     const openTasbih = () => document.getElementById('tasbih-modal')?.classList.remove('hidden');
     const closeTasbih = () => document.getElementById('tasbih-modal')?.classList.add('hidden');
     document.getElementById('btn-menu-tasbih')?.addEventListener('click', openTasbih);
@@ -380,7 +376,7 @@ document.querySelectorAll('.doa-filter-btn').forEach(btn => {
         if (countEl) countEl.innerText = '0';
     });
 
-    // Audio & Search
+    // Audio & Modal Surah & Pencarian Kota
     document.getElementById('daily-audio-btn')?.addEventListener('click', () => {
         if (state.dailyAyatAudio) { new Audio(state.dailyAyatAudio).play(); showToast("Memutar audio..."); }
     });
