@@ -234,6 +234,55 @@ function filterDoa(kat) {
 }
 
 function initEventListeners() {
+// ==========================================
+// PENCARIAN GLOBAL (Surah, Doa, & Hadits)
+// ==========================================
+// Ambil input berdasarkan placeholder atau tag input di header
+const globalSearchInput = document.querySelector('input[placeholder*="Cari Surah"]');
+
+if (globalSearchInput) {
+    globalSearchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+
+        // 1. Filter Surah (Al-Qur'an)
+        if (state.surahList && state.surahList.length > 0) {
+            const filteredSurah = state.surahList.filter(s => 
+                s.namaLatin.toLowerCase().includes(query) ||
+                s.nama.toLowerCase().includes(query) ||
+                s.nomor.toString() === query
+            );
+            renderSurahListUI(filteredSurah, openSurahModal);
+        }
+
+        // 2. Filter Doa
+        if (state.doaList && state.doaList.length > 0) {
+            const filteredDoa = state.doaList.filter(d => 
+                d.judul.toLowerCase().includes(query) ||
+                d.latin.toLowerCase().includes(query) ||
+                d.arti.toLowerCase().includes(query)
+            );
+            renderDoaListUI(filteredDoa);
+        }
+
+        // 3. Filter Hadits (yang tampil di DOM)
+        const haditsCards = document.querySelectorAll('#hadits-feed-container > div');
+        haditsCards.forEach(card => {
+            const text = card.innerText.toLowerCase();
+            if (text.includes(query)) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+
+        // (Opsional) Otomatis pindah ke tab 'quran' jika pengguna mulai mengetik di dashboard
+        if (query.length > 0 && state.activeTab === 'dashboard') {
+            switchTab('quran');
+        }
+    });
+}
+
+    
     // Navigation
     document.getElementById('nav-dashboard')?.addEventListener('click', () => switchTab('dashboard'));
     document.getElementById('nav-quran')?.addEventListener('click', () => switchTab('quran'));
