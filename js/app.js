@@ -156,13 +156,37 @@ async function loadDailyAyat() {
 
 async function loadDailyHadits() {
     const data = await fetchHaditsBookAPI('bukhari');
+    const arabEl = document.getElementById('daily-hadits-arabic');
+    const transEl = document.getElementById('daily-hadits-translation');
+
     if (data && data.code === 200 && data.data.hadiths.length > 0) {
         const h = data.data.hadiths[0];
-        const arabEl = document.getElementById('daily-hadits-arabic');
-        const transEl = document.getElementById('daily-hadits-translation');
+        if (arabEl) arabEl.innerText = h.arab ? h.arab.substring(0, 150) + '...' : '';
+        if (transEl) transEl.innerText = h.id || '';
+    } else {
+        if (arabEl) arabEl.innerText = 'Hadits pilihan hari ini.';
+        if (transEl) transEl.innerText = 'Niat adalah landasan utama dalam setiap amalan.';
+    }
+}
 
-        if (arabEl) arabEl.innerText = h.arab.substring(0, 150) + '...';
-        if (transEl) transEl.innerText = h.id;
+async function loadHaditsBook(bookName) {
+    const container = document.getElementById('hadits-feed-container');
+    if (!container) return;
+    container.innerHTML = '<div class="p-4 text-center text-xs text-slate-400 animate-pulse">Memuat data hadis...</div>';
+
+    const data = await fetchHaditsBookAPI(bookName);
+    if (data && data.code === 200 && data.data.hadiths.length > 0) {
+        container.innerHTML = data.data.hadiths.map(h => `
+            <div class="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 space-y-2.5">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span class="text-xs font-bold text-emerald-700 uppercase">${h.judul || 'Hadits No. ' + h.number}</span>
+                </div>
+                <p class="text-right font-arabic text-xl leading-loose text-slate-800">${h.arab}</p>
+                <p class="text-xs text-slate-600 leading-relaxed">${h.id}</p>
+            </div>
+        `).join('');
+    } else {
+        container.innerHTML = '<div class="p-4 text-center text-xs text-amber-600">Gagal memuat data hadits. Silakan periksa koneksi internet Anda.</div>';
     }
 }
 
