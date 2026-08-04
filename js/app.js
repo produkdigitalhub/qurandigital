@@ -24,8 +24,11 @@ async function initApp() {
     setHijriDate();
     initEventListeners();
     
-    // Render data lokal bawaan
-    renderDoaListUI(state.doaList); 
+    // Render data awal jika ada di state
+    if (state.doaList && state.doaList.length > 0) {
+        renderDoaListUI(state.doaList); 
+    }
+    
     startTimer();
 
     // Jalankan pemanggilan data secara paralel
@@ -34,7 +37,7 @@ async function initApp() {
         loadDailyAyat(),
         loadDailyHadits(),
         loadSurahList(),
-        renderHaditsFeed('bukhari'), // Menggunakan nama fungsi baru
+        renderHaditsFeed('bukhari'),
         loadAllDoa()
     ]);
 }
@@ -87,20 +90,10 @@ function filterDoa(kat) {
         renderDoaListUI(state.doaList);
     } else {
         const filtered = state.doaList.filter(d => {
-            const itemKat = (d.kat || '').toLowerCase();
+            const itemKat = (d.kat || d.grup || '').toLowerCase();
             return itemKat.includes(kat.toLowerCase());
         });
         renderDoaListUI(filtered);
-    }
-}
-
-// js/app.js load doa
-
-async function loadAllDoa() {
-    const apiDoa = await fetchDoaListAPI();
-    if (apiDoa && apiDoa.length > 0) {
-        state.doaList = apiDoa;
-        renderDoaListUI(state.doaList);
     }
 }
 
@@ -255,7 +248,6 @@ async function openSurahModal(nomor) {
     }
 }
 
-// NAMA FUNGSI DIUBAH MENJADI renderHaditsFeed
 async function renderHaditsFeed(bookName) {
     const container = document.getElementById('hadits-feed-container');
     if (!container) return;
@@ -297,7 +289,8 @@ function initEventListeners() {
                 const filteredDoa = state.doaList.filter(d => 
                     (d.judul && d.judul.toLowerCase().includes(query)) ||
                     (d.latin && d.latin.toLowerCase().includes(query)) ||
-                    (d.arti && d.arti.toLowerCase().includes(query))
+                    (d.arti && d.arti.toLowerCase().includes(query)) ||
+                    (d.kat && d.kat.toLowerCase().includes(query))
                 );
                 renderDoaListUI(filteredDoa);
             }
@@ -404,9 +397,6 @@ function initEventListeners() {
         document.getElementById('surah-modal')?.classList.add('hidden');
     });
 
-
-
-    
     // Pencarian Kota
     document.getElementById('btn-search-city')?.addEventListener('click', async () => {
         const input = document.getElementById('city-search-input');
@@ -431,6 +421,9 @@ function initEventListeners() {
             });
         }
     });
+
+    // Inisialisasi kompas kiblat
+    initCompass();
 }
 
 // Fungsi Menghitung Arah Kiblat berdasarkan Lintang (lat) dan Bujur (lng)
@@ -452,12 +445,10 @@ function calculateQiblaBearing(lat, lng) {
 
 // Fungsi Mengaktifkan Sensor Arah HP
 function initCompass() {
-    // Default Koordinat Makassar (Jika GPS mati)
     let userLat = -5.14766;
     let userLng = 119.43273;
     let qiblaBearing = calculateQiblaBearing(userLat, userLng);
 
-    // Coba Ambil GPS Pengguna secara otomatis
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
             userLat = pos.coords.latitude;
@@ -469,11 +460,9 @@ function initCompass() {
         });
     }
 
-    // Atur rotasi panah Kiblat awal
     const pointer = document.getElementById('qibla-pointer');
     if (pointer) pointer.style.transform = `rotate(${qiblaBearing}deg)`;
 
-    // Dengarkan rotasi gyroscope HP
     if (window.DeviceOrientationEvent) {
         window.addEventListener('deviceorientation', (e) => {
             let heading = e.webkitCompassHeading || (360 - e.alpha);
