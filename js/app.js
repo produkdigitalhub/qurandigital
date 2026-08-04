@@ -279,14 +279,37 @@ if (globalSearchInput) {
         }
 
         // 2. Filter Doa
-        if (state.doaList && state.doaList.length > 0) {
-            const filteredDoa = state.doaList.filter(d => 
-                d.judul.toLowerCase().includes(query) ||
-                d.latin.toLowerCase().includes(query) ||
-                d.arti.toLowerCase().includes(query)
-            );
-            renderDoaListUI(filteredDoa);
+       // Perbarui event listener tombol filter doa di js/app.js
+document.querySelectorAll('.doa-filter-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+        // Styling tombol aktif
+        document.querySelectorAll('.doa-filter-btn').forEach(b => {
+            b.classList.remove('bg-emerald-600', 'text-white', 'shadow-sm');
+            b.classList.add('bg-slate-100', 'text-slate-600');
+        });
+        e.target.classList.remove('bg-slate-100', 'text-slate-600');
+        e.target.classList.add('bg-emerald-600', 'text-white', 'shadow-sm');
+
+        const kat = e.target.dataset.kat;
+
+        // Ambil data dari API atau filter lokal
+        if (kat === 'semua') {
+            renderDoaListUI(state.doaList);
+        } else {
+            // Ambil dari API berdasarkan query parameter 'grup'
+            const filteredApi = await fetchDoaListAPI(kat);
+            if (filteredApi && filteredApi.length > 0) {
+                renderDoaListUI(filteredApi);
+            } else {
+                // Fallback filter lokal jika server slow
+                const filtered = state.doaList.filter(d => 
+                    d.kat.toLowerCase().includes(kat.toLowerCase())
+                );
+                renderDoaListUI(filtered);
+            }
         }
+    });
+});
 
         // 3. Filter Hadits (yang tampil di DOM)
         const haditsCards = document.querySelectorAll('#hadits-feed-container > div');
