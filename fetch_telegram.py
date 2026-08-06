@@ -16,7 +16,7 @@ if SESSION_STRING:
     if missing_padding:
         SESSION_STRING += "=" * (4 - missing_padding)
 
-CHANNELS = ["@hafayutv", "@pelajarsunnahid"]
+CHANNELS = ["hafayutv", "pelajarsunnahid"]
 
 
 
