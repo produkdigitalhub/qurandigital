@@ -6,18 +6,9 @@ from telethon.sessions import StringSession
 
 API_ID = int(os.environ["TELEGRAM_API_ID"])
 API_HASH = os.environ["TELEGRAM_API_HASH"]
-
-# Mengambil session string dan membersihkan spasi/petik ekstra
 SESSION_STRING = os.environ.get("TELEGRAM_SESSION", "").strip().strip('"\'')
 
-# Menambahkan padding otomatis jika panjang string kurang (kelipatan 4)
-if SESSION_STRING:
-    missing_padding = len(SESSION_STRING) % 4
-    if missing_padding:
-        SESSION_STRING += "=" * (4 - missing_padding)
-
 CHANNELS = ["hafayutv", "pelajarsunnahid"]
-
 
 
 async def fetch_messages():
