@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Kirim JSON ke Telegram</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex items-center justify-center p-4">
+
+  <div class="max-w-md w-full bg-white rounded-xl shadow-md p-6 border border-gray-200">
+    <!-- Header -->
+    <div class="text-center mb-6">
+      <h2 class="text-2xl font-bold text-emerald-700">Kirim Data ke Telegram</h2>
+      <p class="text-xs text-gray-500 mt-1">Mengambil data dari <code>data/posts.json</code> lalu mengirim ke Bot Telegram</p>
+    </div>
+
+    <!-- Tombol & Navigasi -->
+    <div class="space-y-4">
+      <button id="sendBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2 shadow-sm">
+        <span>🚀 Kirim Data ke Telegram</span>
+      </button>
+
+      <!-- Status Informasi -->
+      <div id="status" class="hidden text-sm p-3 rounded-lg text-center font-medium"></div>
+
+      <!-- Link kembali ke Feed Utama -->
+      <div class="text-center pt-2 border-t">
+        <a href="index.html" class="text-xs text-emerald-600 hover:underline">← Kembali ke Feed Utama (index.html)</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1. Masukkan Token Bot dan Chat ID Telegram Anda
+    const TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE';
+    const TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID_HERE';
+
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+      const statusText = document.getElementById('status');
+      
+      // Tampilkan indikator loading
+      statusText.classList.remove('hidden', 'bg-emerald-100', 'text-emerald-700', 'bg-red-100', 'text-red-700');
+      statusText.classList.add('bg-blue-50', 'text-blue-600');
+      statusText.innerText = "⏳ Mengambil data dari data/posts.json...";
+
+      try {
+        // 2. Ambil data dari data/posts.json (atau 'post.json' sesuaikan lokasi file Anda)
+        const response = await fetch('./data/posts.json');
+        if (!response.ok) {
+          throw new Error('Gagal mengambil file posts.json');
+        }
+        const data = await response.json();
+
+        statusText.innerText = "⏳ Mengirim pesan ke Telegram...";
+
+        // 3. Menangani jika isi JSON berupa Array (banyak post) atau Objek Tunggal
+        let message = '';
+
+        if (Array.isArray(data)) {
+          // Jika data berupa array, kita kirim post pertama atau buat ringkasan
+          const post = data[0]; // Mengambil item pertama
+          message = `
+<b>🔔 Post Baru Terdeteksi!</b>
+--------------------------------
+<b>Channel:</b> @${post.channel || '-'}
+<b>Tanggal:</b> ${post.date || '-'}
+<b>Pesan:</b> 
+${post.text || '-'}
+          `.trim();
+        } else {
+          // Jika data berupa objek tunggal
+          message = `
+<b>🔔 Post Baru Terdeteksi!</b>
+--------------------------------
+<b>ID:</b> ${data.id || '-'}
+<b>Judul:</b> ${data.title || '-'}
+<b>Pesan:</b> ${data.content || data.body || data.text || '-'}
+          `.trim();
+        }
+
+        // 4. Kirim data ke Telegram Bot API
+        const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+        
+        const telegramResponse = await fetch(telegramUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: message,
+            parse_mode: 'HTML'
+          })
+        });
+
+        const result = await telegramResponse.json();
+
+        if (result.ok) {
+          statusText.className = "text-sm p-3 rounded-lg text-center font-medium bg-emerald-100 text-emerald-800";
+          statusText.innerText = "✅ Pesan berhasil dikirim ke Telegram!";
+        } else {
+          statusText.className = "text-sm p-3 rounded-lg text-center font-medium bg-red-100 text-red-800";
+          statusText.innerText = "❌ Gagal mengirim: " + result.description;
+        }
+
+      } catch (error) {
+        console.error(error);
+        statusText.className = "text-sm p-3 rounded-lg text-center font-medium bg-red-100 text-red-800";
+        statusText.innerText = "❌ Terjadi kesalahan: " + error.message;
+      }
+    });
+  </script>
+
+</body>
+</html>
