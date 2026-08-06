@@ -1,1 +1,37 @@
+name: Auto Fetch Telegram Feed
 
+on:
+  schedule:
+    # Berjalan otomatis setiap 2 jam
+    - cron: '0 */2 * * *'
+  workflow_dispatch: # Agar bisa dijalankan manual dari tab Actions GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: pip install telethon
+
+      - name: Run Fetch Script
+        env:
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+          TELEGRAM_SESSION: ${{ secrets.TELEGRAM_SESSION }}
+        run: python fetch_telegram.py
+
+      - name: Commit and Push Updated Data
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/posts.json
+          git commit -m "Auto update telegram posts" || exit 0
+          git push
