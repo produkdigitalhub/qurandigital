@@ -5,7 +5,8 @@ import {
     fetchPrayerScheduleAPI, 
     searchCityAPI, 
     fetchHaditsBookAPI,
-    fetchDoaListAPI 
+    fetchDoaListAPI,
+    calculateFiqihTimes 
 } from './api.js';
 import { 
     showToast, 
@@ -125,6 +126,45 @@ async function loadPrayerSchedule(cityId) {
         renderPrayerGridUI(data.data.jadwal);
         renderFullPrayerScheduleUI(data.data.jadwal);
         updateNextPrayer(data.data.jadwal);
+
+        // Update Waktu Fiqih Sunnah & Haram
+        updateFiqihUI(data.data.jadwal);
+    }
+}
+
+function updateFiqihUI(jadwal) {
+    const fiqihData = calculateFiqihTimes(jadwal);
+    if (!fiqihData) return;
+
+    // 1. Update Waktu Syuruq & Dhuha
+    const elSyuruq = document.getElementById('time-syuruq');
+    const elDhuha = document.getElementById('status-dhuha');
+    if (elSyuruq) elSyuruq.innerText = fiqihData.syuruq;
+    if (elDhuha) elDhuha.innerText = `Awal Dhuha: ~${fiqihData.dhuha}`;
+
+    // 2. Update Waktu Tahajud
+    const elTahajud = document.getElementById('time-tahajud');
+    if (elTahajud) elTahajud.innerText = fiqihData.tahajud;
+
+    // 3. Update Status Waktu Haram Shalat
+    const container = document.getElementById('status-haram-container');
+    const title = document.getElementById('status-haram-title');
+    const desc = document.getElementById('status-haram-desc');
+
+    if (container && title && desc) {
+        title.innerText = fiqihData.statusHaram.title;
+        desc.innerText = fiqihData.statusHaram.desc;
+
+        if (fiqihData.statusHaram.type === 'danger') {
+            container.className = "bg-rose-950/40 border border-rose-500/30 rounded-2xl p-3 flex items-center gap-3";
+            title.className = "text-[11px] font-bold text-rose-300";
+        } else if (fiqihData.statusHaram.type === 'warning') {
+            container.className = "bg-amber-950/40 border border-amber-500/30 rounded-2xl p-3 flex items-center gap-3";
+            title.className = "text-[11px] font-bold text-amber-300";
+        } else {
+            container.className = "bg-emerald-950/40 border border-emerald-500/20 rounded-2xl p-3 flex items-center gap-3";
+            title.className = "text-[11px] font-bold text-emerald-300";
+        }
     }
 }
 
@@ -164,6 +204,11 @@ function updateNextPrayer(j) {
 
 function startTimer() {
     setInterval(() => {
+        if (state.prayerData) {
+            // Update status fiqih setiap detik agar banner waktu haram berubah otomatis tepat waktu
+            updateFiqihUI(state.prayerData.jadwal);
+        }
+
         if (!state.nextPrayerTime) return;
         const diff = state.nextPrayerTime - new Date();
         if (diff <= 0) {
