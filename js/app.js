@@ -473,3 +473,37 @@ function initCompass() {
         });
     }
 }
+
+
+// Listener tombol Kajian
+document.getElementById('btn-menu-kajian')?.addEventListener('click', () => {
+    openKajianNasihatModal('kajian');
+});
+
+// Listener tombol Nasihat
+document.getElementById('btn-menu-nasihat')?.addEventListener('click', () => {
+    openKajianNasihatModal('nasihat');
+});
+
+// Listener tutup modal
+document.getElementById('btn-close-kn-modal')?.addEventListener('click', () => {
+    document.getElementById('kajian-nasihat-modal').classList.add('hidden');
+});
+
+// Fungsi untuk memfilter atau menampilkan konten berdasarkan tipe
+function openKajianNasihatModal(type) {
+    const modal = document.getElementById('kajian-nasihat-modal');
+    const title = document.getElementById('kn-modal-title');
+    const icon = document.getElementById('kn-modal-icon');
+    const content = document.getElementById('kn-modal-content');
+
+    if (type === 'kajian') {
+        title.textContent = 'Jadwal Kajian Islami';
+        icon.className = 'fa-solid fa-calendar-day text-amber-400 text-lg';
+    } else {
+        title.textContent = 'Nasihat & Mutiara Hikmah';
+        icon.className = 'fa-solid fa-quote-left text-amber-400 text-lg';
+    }
+
+    modal.classList.remove('hidden');
+}
