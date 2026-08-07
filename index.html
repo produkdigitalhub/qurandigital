@@ -139,9 +139,16 @@
         </div>
 
         <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400">
-            <span>Tereset otomatis setiap hari</span>
-            <button onclick="resetIbadahTracker()" class="text-rose-500 hover:underline">Reset</button>
-        </div>
+            <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400">
+    <!-- TOMBOL LIHAT RIWAYAT (BARU) -->
+    <button onclick="openIbadahHistoryModal()" class="text-emerald-600 font-semibold hover:underline flex items-center gap-1">
+        <i class="fa-solid fa-clock-rotate-left text-[9px]"></i> Lihat Riwayat
+    </button>
+    
+    <!-- TOMBOL RESET -->
+    <button onclick="resetIbadahTracker()" class="text-rose-500 hover:underline">Reset Hari Ini</button>
+</div>
+            
     </div>
 
     <!-- CARD 2: Doa & Motivasi Sesuai Suasana Hati -->
