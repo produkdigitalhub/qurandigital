@@ -14,10 +14,10 @@ const TELEGRAM_CHANNELS = {
     }
 };
 
-// Global Store untuk menyimpan data postingan sementara
+// Cache data postingan sementara untuk modal detail
 window.telegramPostsCache = [];
 
-// Fetcher dengan Proxy Fallback
+// Fetcher HTML dengan Multi-Proxy Fallback (Mengatasi Error CORS & 520)
 async function fetchTelegramHTML(targetUrl) {
     const proxies = [
         `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
@@ -36,10 +36,10 @@ async function fetchTelegramHTML(targetUrl) {
             console.warn(`Proxy ${proxy} gagal, mencoba proxy berikutnya...`);
         }
     }
-    throw new Error("Gagal mengambil data dari Telegram.");
+    throw new Error("Gagal mengambil data dari Telegram. Semua proxy bermasalah.");
 }
 
-// Parse HTML Telegram
+// Extract data postingan dari HTML Telegram Web
 function parseTelegramPosts(htmlText) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlText, 'text/html');
@@ -48,11 +48,22 @@ function parseTelegramPosts(htmlText) {
 
     widgetPosts.forEach((postEl, index) => {
         const textEl = postEl.querySelector('.tgme_widget_message_text');
-        let text = textEl ? textEl.innerText.trim() : '';
+        let fullText = textEl ? textEl.innerText.trim() : '';
+
+        // Pisahkan baris pertama sebagai Judul/Caption dan sisanya sebagai Penjelasan
+        let title = '';
+        let description = '';
+
+        if (fullText) {
+            const lines = fullText.split('\n').filter(line => line.trim() !== '');
+            title = lines[0] || 'Informasi Kajian & Nasihat';
+            description = lines.slice(1).join('\n\n');
+        }
 
         const timeEl = postEl.querySelector('time');
         let dateStr = timeEl ? timeEl.innerText : '';
 
+        // Ekstraksi Gambar/Thumbnail
         let imageUrl = null;
         const photoEl = postEl.querySelector('.tgme_widget_message_photo_wrap');
         if (photoEl) {
@@ -73,10 +84,12 @@ function parseTelegramPosts(htmlText) {
         const linkEl = postEl.querySelector('.tgme_widget_message_date');
         const postUrl = linkEl ? linkEl.getAttribute('href') : '#';
 
-        if (text || imageUrl) {
+        if (fullText || imageUrl) {
             posts.push({
                 id: index,
-                text: text,
+                title: title,
+                description: description,
+                fullText: fullText,
                 date: dateStr,
                 image: imageUrl,
                 url: postUrl
@@ -85,11 +98,11 @@ function parseTelegramPosts(htmlText) {
     });
 
     const reversed = posts.reverse();
-    window.telegramPostsCache = reversed; // Simpan cache
+    window.telegramPostsCache = reversed;
     return reversed;
 }
 
-// Render Card Grid 2 Kolom (Thumbnail Gambar Full)
+// Render Grid 2 Kolom Ringkas (Thumbnail Gambar/Judul Singkat)
 function renderPostCardsHTML(posts) {
     if (!posts || posts.length === 0) {
         return `<div class="p-4 text-center text-xs text-slate-400">Belum ada postingan terbaru.</div>`;
@@ -98,38 +111,39 @@ function renderPostCardsHTML(posts) {
     return `
         <div class="grid grid-cols-2 gap-2.5 sm:gap-4">
             ${posts.map((p, idx) => {
-                const safeText = encodeURIComponent(p.text ? p.text.substring(0, 150) + '...' : 'Informasi Kajian & Nasihat');
+                const safeText = encodeURIComponent(p.title || 'Informasi Kajian & Nasihat');
 
                 return `
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition group">
                     
-                    <!-- Area Gambar / Card yang dapat diklik untuk Detail -->
-                    <div onclick="openPostDetail(${idx})" class="cursor-pointer relative w-full bg-slate-900/5 overflow-hidden flex items-center justify-center">
+                    <!-- Area Klik untuk Buka Modal Detail -->
+                    <div onclick="openPostDetail(${idx})" class="cursor-pointer relative w-full flex-1 flex flex-col">
                         ${p.image ? `
-                            <img src="${p.image}" alt="Media Telegram" class="w-full h-44 sm:h-52 object-cover group-hover:scale-105 transition duration-300" loading="lazy" />
-                        ` : `
-                            <div class="w-full h-36 p-3 bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center text-center">
-                                <p class="text-xs text-emerald-800 line-clamp-4 leading-relaxed font-medium">${p.text}</p>
+                            <div class="w-full h-36 sm:h-44 bg-slate-100 overflow-hidden relative">
+                                <img src="${p.image}" alt="Media Telegram" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy" />
+                                <span class="absolute bottom-2 right-2 bg-slate-900/60 backdrop-blur-sm text-white text-[9px] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <i class="fa-solid fa-expand text-[8px]"></i> Detail
+                                </span>
                             </div>
-                        `}
-                        
-                        <!-- Badge Indikator Klik Detail -->
-                        <span class="absolute bottom-2 right-2 bg-slate-900/60 backdrop-blur-sm text-white text-[9px] px-2 py-0.5 rounded-full flex items-center gap-1 opacity-90">
-                            <i class="fa-solid fa-expand"></i> Detail
-                        </span>
+                        ` : ''}
+
+                        <div class="p-2.5 flex-1 flex flex-col justify-between space-y-1">
+                            <h4 class="text-xs font-semibold text-slate-800 line-clamp-2 leading-snug">
+                                ${p.title}
+                            </h4>
+                            ${p.description ? `<p class="text-[10px] text-slate-500 line-clamp-1">Klik untuk detail lengkap...</p>` : ''}
+                        </div>
                     </div>
 
-                    <!-- Footer Ringkas -->
-                    <div class="p-2 sm:p-2.5 bg-white border-t border-slate-50 flex items-center justify-between text-[10px] sm:text-[11px]">
+                    <!-- Footer Card -->
+                    <div class="p-2 sm:p-2.5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between text-[10px]">
                         <span class="text-slate-400 truncate">
                             <i class="fa-regular fa-clock"></i> ${p.date || 'Terbaru'}
                         </span>
                         
-                        <div class="flex items-center gap-1">
-                            <button onclick="sharePost('${safeText}', '${p.url}')" class="text-slate-500 hover:text-emerald-600 bg-slate-100 p-1.5 rounded-full transition" title="Bagikan">
-                                <i class="fa-solid fa-share-nodes"></i>
-                            </button>
-                        </div>
+                        <button onclick="sharePost('${safeText}', '${p.url}')" class="text-slate-500 hover:text-emerald-600 bg-white border border-slate-100 px-2 py-0.5 rounded-full transition flex items-center gap-1">
+                            <i class="fa-solid fa-share-nodes text-[9px]"></i> Share
+                        </button>
                     </div>
 
                 </div>
@@ -138,12 +152,11 @@ function renderPostCardsHTML(posts) {
     `;
 }
 
-// Fungsi Buka Detail Modal (Tampil Penuh Gambar + Teks Utuh)
+// Open Modal Detail (Scrollable, Teks & Gambar Lengkap)
 window.openPostDetail = function(index) {
     const post = window.telegramPostsCache[index];
     if (!post) return;
 
-    // Elemen Modal Detail (Dibuat otomatis jika belum ada di HTML)
     let detailModal = document.getElementById('telegram-detail-modal');
     if (!detailModal) {
         detailModal = document.createElement('div');
@@ -152,42 +165,59 @@ window.openPostDetail = function(index) {
         document.body.appendChild(detailModal);
     }
 
-    const safeText = encodeURIComponent(post.text ? post.text.substring(0, 150) + '...' : 'Informasi Kajian & Nasihat');
+    const safeText = encodeURIComponent(post.title || 'Informasi Kajian & Nasihat');
 
     detailModal.innerHTML = `
-        <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-200">
+        <div class="bg-white rounded-3xl max-w-lg w-full max-h-[88vh] overflow-hidden shadow-2xl flex flex-col animate-in fade-in zoom-in duration-200">
             
             <!-- Header Modal Detail -->
-            <div class="p-3.5 px-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <div class="p-3.5 px-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/80 sticky top-0 z-10 backdrop-blur-md">
                 <span class="text-xs text-slate-500 font-medium flex items-center gap-1.5">
                     <i class="fa-regular fa-clock text-emerald-600"></i> ${post.date || 'Diposting di Telegram'}
                 </span>
-                <button onclick="closePostDetail()" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-rose-100 hover:text-rose-600 flex items-center justify-center text-slate-600 transition">
+                <button onclick="closePostDetail()" class="w-7 h-7 rounded-full bg-slate-200/80 hover:bg-rose-100 hover:text-rose-600 flex items-center justify-center text-slate-600 transition">
                     <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
             </div>
 
-            <!-- Content Area (Scrollable) -->
+            <!-- Konten Utama (Scrollable) -->
             <div class="p-4 overflow-y-auto space-y-4 flex-1">
+                
+                <!-- Gambar Utuh (Tidak Terpotong) -->
                 ${post.image ? `
-                    <div class="w-full bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center border border-slate-100">
-                        <img src="${post.image}" alt="Detail Gambar" class="w-full h-auto object-contain max-h-[60vh]" />
+                    <div class="w-full bg-slate-900/5 rounded-2xl overflow-hidden flex items-center justify-center border border-slate-100">
+                        <img src="${post.image}" alt="Poster Detail" class="w-full h-auto object-contain max-h-[50vh]" />
                     </div>
                 ` : ''}
 
-                ${post.text ? `
-                    <div class="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line font-normal break-words selection:bg-emerald-100">
-                        ${post.text}
+                <!-- Judul / Caption -->
+                ${post.title ? `
+                    <div class="border-b border-slate-100 pb-2.5">
+                        <h3 class="text-sm sm:text-base font-bold text-slate-800 leading-snug">
+                            ${post.title}
+                        </h3>
                     </div>
                 ` : ''}
+
+                <!-- Penjelasan Lengkap -->
+                ${post.description ? `
+                    <div class="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line font-normal break-words">
+                        ${post.description}
+                    </div>
+                ` : (!post.title && post.fullText ? `
+                    <div class="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line font-normal break-words">
+                        ${post.fullText}
+                    </div>
+                ` : '')}
+
             </div>
 
             <!-- Footer Modal Detail -->
-            <div class="p-3.5 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-2">
+            <div class="p-3.5 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-2.5">
                 <button onclick="sharePost('${safeText}', '${post.url}')" class="flex-1 py-2 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-                    <i class="fa-solid fa-share-nodes"></i> Share Web App
+                    <i class="fa-solid fa-share-nodes text-xs"></i> Bagikan
                 </button>
-                <a href="${post.url}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                <a href="${post.url}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow-sm">
                     Buka Telegram <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
                 </a>
             </div>
@@ -198,13 +228,13 @@ window.openPostDetail = function(index) {
     detailModal.classList.remove('hidden');
 };
 
-// Tutup Detail Modal
+// Close Modal Detail
 window.closePostDetail = function() {
     const detailModal = document.getElementById('telegram-detail-modal');
     if (detailModal) detailModal.classList.add('hidden');
 };
 
-// Fungsi Share
+// Fungsi Share Web App
 window.sharePost = function(encodedText, telegramUrl) {
     const text = decodeURIComponent(encodedText);
     const webAppUrl = window.location.href;
@@ -255,6 +285,7 @@ export async function openTelegramModal(type = 'kajian') {
         const posts = parseTelegramPosts(html);
         contentEl.innerHTML = renderPostCardsHTML(posts);
     } catch (err) {
+        console.error("Gagal memuat feed modal:", err);
         contentEl.innerHTML = `
             <div class="p-6 text-center text-xs text-rose-500 bg-rose-50 rounded-2xl border border-rose-100 space-y-2">
                 <i class="fa-solid fa-triangle-exclamation text-xl"></i>
