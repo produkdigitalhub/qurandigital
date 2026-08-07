@@ -1,4 +1,3 @@
-// js/app.js
 import { state } from './config.js';
 import { 
     fetchSurahListAPI, 
@@ -18,11 +17,8 @@ import {
 
 import { initTelegramFeed } from './telegramFeed.js';
 
+// Inisialisasi Utama Aplikasi
 document.addEventListener('DOMContentLoaded', () => {
-    // Inisialisasi fitur feed telegram
-    initTelegramFeed();
-
-window.addEventListener('DOMContentLoaded', () => {
     initApp();
 });
 
@@ -30,6 +26,9 @@ async function initApp() {
     setHijriDate();
     initEventListeners();
     
+    // Inisialisasi listener tombol Kajian & Nasihat Telegram Feed
+    initTelegramFeed();
+
     // Render data awal jika ada di state
     if (state.doaList && state.doaList.length > 0) {
         renderDoaListUI(state.doaList); 
@@ -313,7 +312,7 @@ function initEventListeners() {
         });
     }
 
-    // Pilihan Kitab Hadis (Bukhari, Muslim, Tirmidzi)
+    // Pilihan Kitab Hadis
     document.querySelectorAll('#hadits-books-grid button').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const bookName = e.currentTarget.dataset.book;
@@ -428,11 +427,10 @@ function initEventListeners() {
         }
     });
 
-    // Inisialisasi kompas kiblat
     initCompass();
 }
 
-// Fungsi Menghitung Arah Kiblat berdasarkan Lintang (lat) dan Bujur (lng)
+// Menghitung Arah Kiblat
 function calculateQiblaBearing(lat, lng) {
     const kaabaLat = 21.422487 * (Math.PI / 180);
     const kaabaLng = 39.826206 * (Math.PI / 180);
@@ -449,7 +447,7 @@ function calculateQiblaBearing(lat, lng) {
     return (qibla + 360) % 360;
 }
 
-// Fungsi Mengaktifkan Sensor Arah HP
+// Sensor Kompas
 function initCompass() {
     let userLat = -5.14766;
     let userLng = 119.43273;
@@ -478,38 +476,4 @@ function initCompass() {
             }
         });
     }
-}
-
-
-// Listener tombol Kajian
-document.getElementById('btn-menu-kajian')?.addEventListener('click', () => {
-    openKajianNasihatModal('kajian');
-});
-
-// Listener tombol Nasihat
-document.getElementById('btn-menu-nasihat')?.addEventListener('click', () => {
-    openKajianNasihatModal('nasihat');
-});
-
-// Listener tutup modal
-document.getElementById('btn-close-kn-modal')?.addEventListener('click', () => {
-    document.getElementById('kajian-nasihat-modal').classList.add('hidden');
-});
-
-// Fungsi untuk memfilter atau menampilkan konten berdasarkan tipe
-function openKajianNasihatModal(type) {
-    const modal = document.getElementById('kajian-nasihat-modal');
-    const title = document.getElementById('kn-modal-title');
-    const icon = document.getElementById('kn-modal-icon');
-    const content = document.getElementById('kn-modal-content');
-
-    if (type === 'kajian') {
-        title.textContent = 'Jadwal Kajian Islami';
-        icon.className = 'fa-solid fa-calendar-day text-amber-400 text-lg';
-    } else {
-        title.textContent = 'Nasihat & Mutiara Hikmah';
-        icon.className = 'fa-solid fa-quote-left text-amber-400 text-lg';
-    }
-
-    modal.classList.remove('hidden');
 }
