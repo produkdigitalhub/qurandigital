@@ -1,13 +1,13 @@
 // Konfigurasi Channel Telegram
 const TELEGRAM_CHANNELS = {
     kajian: {
-        url: 'https://t.me/s/madrosahsunnah', // Channel jadwal kajian
+        url: 'https://t.me/s/madrosahsunnah', 
         title: 'Jadwal & Info Kajian',
         icon: 'fa-calendar-day',
         iconColor: 'text-amber-500'
     },
     nasihat: {
-        url: 'https://t.me/s/wanitamuslimahofficial', // Channel nasihat/poster
+        url: 'https://t.me/s/wanitamuslimahofficial', 
         title: 'Nasihat & Quote Islami',
         icon: 'fa-quote-left',
         iconColor: 'text-emerald-500'
@@ -33,7 +33,7 @@ async function fetchTelegramHTML(targetUrl) {
             console.warn(`Proxy ${proxy} gagal, mencoba proxy berikutnya...`);
         }
     }
-    throw new Error("Gagal mengambil data dari Telegram (Semua proxy bermasalah).");
+    throw new Error("Gagal mengambil data dari Telegram.");
 }
 
 // Extract data postingan dari HTML Telegram Web
@@ -83,49 +83,46 @@ function parseTelegramPosts(htmlText) {
     return posts.reverse();
 }
 
-// Template Render Card Postingan (Responsive Card UI + Share Button)
+// Render Card Postingan (Gambar & Teks Tampil Penuh / Full Aspect Ratio)
 function renderPostCardsHTML(posts) {
     if (!posts || posts.length === 0) {
         return `<div class="p-4 text-center text-xs text-slate-400">Belum ada postingan terbaru.</div>`;
     }
 
     return `
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            ${posts.map((p, index) => {
-                // Escape string untuk dikirim via atribut onclick
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            ${posts.map((p) => {
                 const safeText = encodeURIComponent(p.text ? p.text.substring(0, 150) + '...' : 'Informasi Kajian & Nasihat');
                 
                 return `
-                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition group">
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition">
                     
-                    <!-- Thumbnail Media Gambar -->
+                    <!-- Thumbnail Poster / Gambar (Sesuai rasio asli gambar, tidak terpotong) -->
                     ${p.image ? `
-                        <div class="w-full h-44 bg-slate-100 overflow-hidden relative">
-                            <img src="${p.image}" alt="Media Telegram" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy" />
+                        <div class="w-full bg-slate-900/5 flex items-center justify-center overflow-hidden">
+                            <img src="${p.image}" alt="Media Telegram" class="w-full h-auto max-h-96 object-contain" loading="lazy" />
                         </div>
                     ` : ''}
 
-                    <!-- Body Card -->
-                    <div class="p-3.5 flex-1 flex flex-col justify-between space-y-2.5">
+                    <!-- Body Card: Teks tampil penuh secara alami -->
+                    <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
                         ${p.text ? `
-                            <p class="text-xs text-slate-700 leading-relaxed line-clamp-4 whitespace-pre-line font-normal">
+                            <p class="text-xs text-slate-700 leading-relaxed whitespace-pre-line font-normal break-words">
                                 ${p.text}
                             </p>
-                        ` : '<p class="text-xs italic text-slate-400">[Konten Media Image]</p>'}
+                        ` : '<p class="text-xs italic text-slate-400">[Poster / Media Gambar]</p>'}
 
-                        <!-- Footer Card: Tanggal, Share & Link Telegram -->
-                        <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-[11px]">
+                        <!-- Footer Card -->
+                        <div class="pt-2.5 border-t border-slate-100 flex justify-between items-center text-[11px] gap-2">
                             <span class="text-slate-400 flex items-center gap-1 font-medium">
                                 <i class="fa-regular fa-clock text-[10px]"></i> ${p.date || 'Terbaru'}
                             </span>
                             
                             <div class="flex items-center gap-1.5">
-                                <!-- Tombol Share Web App -->
-                                <button onclick="sharePost('${safeText}', '${p.url}')" class="text-slate-500 hover:text-emerald-600 bg-slate-100 hover:bg-emerald-50 px-2.5 py-1 rounded-full font-semibold transition flex items-center gap-1">
+                                <button onclick="sharePost('${safeText}', '${p.url}')" class="text-slate-600 hover:text-emerald-600 bg-slate-100 hover:bg-emerald-50 px-2.5 py-1 rounded-full font-semibold transition flex items-center gap-1">
                                     <i class="fa-solid fa-share-nodes text-[10px]"></i> Share
                                 </button>
 
-                                <!-- Tombol Link Asli Telegram -->
                                 <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 font-semibold hover:underline flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-full">
                                     Buka <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
                                 </a>
@@ -139,10 +136,10 @@ function renderPostCardsHTML(posts) {
     `;
 }
 
-// Fungsi Pemasangan Fitur Share (Terhubung ke Web App)
+// Fungsi Share
 window.sharePost = function(encodedText, telegramUrl) {
     const text = decodeURIComponent(encodedText);
-    const webAppUrl = window.location.href; // Mengambil URL Web App NurIslam kamu
+    const webAppUrl = window.location.href;
     
     const shareData = {
         title: 'NurIslam - Al-Qur\'an & Jadwal Shalat',
@@ -150,11 +147,9 @@ window.sharePost = function(encodedText, telegramUrl) {
         url: webAppUrl
     };
 
-    // 1. Jika Browser / HP Mendukung Native Web Share (WhatsApp, Telegram, FB, dll)
     if (navigator.share) {
         navigator.share(shareData).catch((err) => console.log('Share canceled:', err));
     } else {
-        // 2. Fallback untuk Desktop: Salin Teks + Link ke Clipboard
         const copyText = `${shareData.text}\n${shareData.url}`;
         navigator.clipboard.writeText(copyText).then(() => {
             if (typeof window.showToast === 'function') {
@@ -174,10 +169,7 @@ export async function openTelegramModal(type = 'kajian') {
     const iconEl = document.getElementById('kn-modal-icon');
     const contentEl = document.getElementById('kn-modal-content');
 
-    if (!modal || !contentEl) {
-        console.error("Modal Kajian/Nasihat tidak ditemukan di HTML.");
-        return;
-    }
+    if (!modal || !contentEl) return;
 
     if (titleEl) titleEl.innerText = config.title;
     if (iconEl) iconEl.className = `fa-solid ${config.icon} ${config.iconColor} text-lg`;
@@ -195,7 +187,6 @@ export async function openTelegramModal(type = 'kajian') {
         const posts = parseTelegramPosts(html);
         contentEl.innerHTML = renderPostCardsHTML(posts);
     } catch (err) {
-        console.error("Gagal memuat feed modal:", err);
         contentEl.innerHTML = `
             <div class="p-6 text-center text-xs text-rose-500 bg-rose-50 rounded-2xl border border-rose-100 space-y-2">
                 <i class="fa-solid fa-triangle-exclamation text-xl"></i>
@@ -205,7 +196,7 @@ export async function openTelegramModal(type = 'kajian') {
     }
 }
 
-// Inisialisasi Feed di Dashboard & Event Listeners
+// Inisialisasi Feed di Dashboard
 export function initTelegramFeed() {
     const btnClose = document.getElementById('btn-close-kn-modal');
     if (btnClose) {
@@ -224,7 +215,6 @@ async function loadDashboardPreview() {
     try {
         const html = await fetchTelegramHTML(TELEGRAM_CHANNELS.kajian.url);
         const posts = parseTelegramPosts(html);
-        
         const previewPosts = posts.slice(0, 2);
         container.innerHTML = renderPostCardsHTML(previewPosts);
     } catch (err) {
