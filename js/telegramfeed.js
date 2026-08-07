@@ -84,49 +84,53 @@ function parseTelegramPosts(htmlText) {
 }
 
 // Render Card Postingan (Gambar & Teks Tampil Penuh / Full Aspect Ratio)
+// Render Card Postingan (2 Kolom di HP, Anti-Terpotong)
 function renderPostCardsHTML(posts) {
     if (!posts || posts.length === 0) {
         return `<div class="p-4 text-center text-xs text-slate-400">Belum ada postingan terbaru.</div>`;
     }
 
     return `
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Grid 2 Kolom untuk HP & Desktop dengan Gap Rapat -->
+        <div class="grid grid-cols-2 gap-2 sm:gap-4">
             ${posts.map((p) => {
                 const safeText = encodeURIComponent(p.text ? p.text.substring(0, 150) + '...' : 'Informasi Kajian & Nasihat');
                 
                 return `
-                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition">
+                <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition">
                     
-                    <!-- Thumbnail Poster / Gambar (Sesuai rasio asli gambar, tidak terpotong) -->
-                    ${p.image ? `
-                        <div class="w-full bg-slate-900/5 flex items-center justify-center overflow-hidden">
-                            <img src="${p.image}" alt="Media Telegram" class="w-full h-auto max-h-96 object-contain" loading="lazy" />
-                        </div>
-                    ` : ''}
-
-                    <!-- Body Card: Teks tampil penuh secara alami -->
-                    <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
-                        ${p.text ? `
-                            <p class="text-xs text-slate-700 leading-relaxed whitespace-pre-line font-normal break-words">
-                                ${p.text}
-                            </p>
-                        ` : '<p class="text-xs italic text-slate-400">[Poster / Media Gambar]</p>'}
-
-                        <!-- Footer Card -->
-                        <div class="pt-2.5 border-t border-slate-100 flex justify-between items-center text-[11px] gap-2">
-                            <span class="text-slate-400 flex items-center gap-1 font-medium">
-                                <i class="fa-regular fa-clock text-[10px]"></i> ${p.date || 'Terbaru'}
-                            </span>
-                            
-                            <div class="flex items-center gap-1.5">
-                                <button onclick="sharePost('${safeText}', '${p.url}')" class="text-slate-600 hover:text-emerald-600 bg-slate-100 hover:bg-emerald-50 px-2.5 py-1 rounded-full font-semibold transition flex items-center gap-1">
-                                    <i class="fa-solid fa-share-nodes text-[10px]"></i> Share
-                                </button>
-
-                                <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="text-emerald-600 font-semibold hover:underline flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-full">
-                                    Buka <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-                                </a>
+                    <div>
+                        <!-- Container Gambar: h-auto & w-full memastikan poster utuh 100% -->
+                        ${p.image ? `
+                            <div class="w-full bg-slate-100 flex items-center justify-center overflow-hidden">
+                                <img src="${p.image}" alt="Media Telegram" class="w-full h-auto block object-contain" loading="lazy" />
                             </div>
+                        ` : ''}
+
+                        <!-- Body Teks: Teks lengkap tanpa line-clamp, break-words mencegah overflow -->
+                        <div class="p-2.5 space-y-1.5">
+                            ${p.text ? `
+                                <p class="text-[11px] sm:text-xs text-slate-700 leading-relaxed whitespace-pre-line font-normal break-words">
+                                    ${p.text}
+                                </p>
+                            ` : '<p class="text-[10px] italic text-slate-400">[Poster / Media Gambar]</p>'}
+                        </div>
+                    </div>
+
+                    <!-- Footer Card: Tanggal & Aksi -->
+                    <div class="p-2.5 pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[10px] sm:text-[11px]">
+                        <span class="text-slate-400 font-medium truncate">
+                            <i class="fa-regular fa-clock"></i> ${p.date || 'Terbaru'}
+                        </span>
+                        
+                        <div class="flex items-center gap-1 flex-wrap">
+                            <button onclick="sharePost('${safeText}', '${p.url}')" class="flex-1 sm:flex-none justify-center text-slate-600 hover:text-emerald-600 bg-slate-100 hover:bg-emerald-50 px-2 py-1 rounded-lg font-medium transition flex items-center gap-1">
+                                <i class="fa-solid fa-share-nodes"></i> Share
+                            </button>
+
+                            <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="flex-1 sm:flex-none justify-center text-emerald-600 font-semibold hover:underline flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-lg">
+                                Buka <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
+                            </a>
                         </div>
                     </div>
 
