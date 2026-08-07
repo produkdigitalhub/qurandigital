@@ -15,7 +15,7 @@ import {
     renderFullPrayerScheduleUI 
 } from './ui.js';
 
-import { initTelegramFeed } from './telegramfeed.js';
+import { initTelegramFeed, openTelegramModal } from './telegramfeed.js';
 
 // Inisialisasi Utama Aplikasi 
 document.addEventListener('DOMContentLoaded', () => {
