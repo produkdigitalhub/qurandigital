@@ -1,7 +1,7 @@
 // Konfigurasi Channel Telegram
 const TELEGRAM_CHANNELS = {
     kajian: {
-        url: 'https://t.me/s/infolokarkajian', 
+        url: 'https://t.me/s/madrosahsunnah', 
         title: 'Jadwal & Info Kajian',
         icon: 'fa-calendar-day',
         iconColor: 'text-amber-500'
