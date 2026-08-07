@@ -359,6 +359,10 @@ function initEventListeners() {
     document.getElementById('btn-more-hadits')?.addEventListener('click', () => switchTab('hadits'));
     document.getElementById('btn-menu-kiblat')?.addEventListener('click', () => showToast("Arah Kiblat Indonesia ~294° N-W."));
 
+    // Tombol Kajian & Nasihat
+    document.getElementById('btn-menu-kajian')?.addEventListener('click', () => openTelegramModal('kajian'));
+    document.getElementById('btn-menu-nasihat')?.addEventListener('click', () => openTelegramModal('nasihat'));
+
     // Tasbih Modal
     const openTasbih = () => document.getElementById('tasbih-modal')?.classList.remove('hidden');
     const closeTasbih = () => document.getElementById('tasbih-modal')?.classList.add('hidden');
