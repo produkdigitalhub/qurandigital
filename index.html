@@ -97,97 +97,92 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
 
     <!-- CARD 1: Jurnal Ibadah Harian (Mutaba'ah Yaumiyah) -->
-    <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between space-y-4">
-        <div>
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">
-                        <i class="fa-solid fa-list-check"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xs font-bold text-slate-800">Jurnal Ibadah Harian</h3>
-                        <p class="text-[10px] text-slate-400">Mutaba'ah Yaumiyah</p>
-                    </div>
-                </div>
-                <span id="ibadah-percentage" class="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">0%</span>
-            </div>
-
-            <!-- Progress Bar -->
-            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4">
-                <div id="ibadah-progress-bar" class="bg-emerald-500 h-full w-0 transition-all duration-500 rounded-full"></div>
-            </div>
-
-            <!-- Checklist Items -->
-            <div class="space-y-2 text-xs text-slate-700">
-                <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition">
-                    <span class="flex items-center gap-2"><i class="fa-regular fa-circle-dot text-emerald-500"></i> Shalat Berjamaah / On-Time</span>
-                    <input type="checkbox" onchange="toggleIbadahItem('shalat')" id="chk-shalat" class="w-4 h-4 accent-emerald-600 rounded">
-                </label>
-                <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition">
-                    <span class="flex items-center gap-2"><i class="fa-solid fa-book-quran text-emerald-500"></i> Baca Al-Qur'an (1 Ruku/Juz)</span>
-                    <input type="checkbox" onchange="toggleIbadahItem('quran')" id="chk-quran" class="w-4 h-4 accent-emerald-600 rounded">
-                </label>
-                <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition">
-                    <span class="flex items-center gap-2"><i class="fa-solid fa-hands-holding-circle text-emerald-500"></i> Dzikir Pagi & Petang</span>
-                    <input type="checkbox" onchange="toggleIbadahItem('dzikir')" id="chk-dzikir" class="w-4 h-4 accent-emerald-600 rounded">
-                </label>
-                <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition">
-                    <span class="flex items-center gap-2"><i class="fa-solid fa-coins text-emerald-500"></i> Sedekah Subuh / Harian</span>
-                    <input type="checkbox" onchange="toggleIbadahItem('sedekah')" id="chk-sedekah" class="w-4 h-4 accent-emerald-600 rounded">
-                </label>
-            </div>
-        </div>
-
-        <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400">
-            <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400">
-    <!-- TOMBOL LIHAT RIWAYAT (BARU) -->
-    <button onclick="openIbadahHistoryModal()" class="text-emerald-600 font-semibold hover:underline flex items-center gap-1">
-        <i class="fa-solid fa-clock-rotate-left text-[9px]"></i> Lihat Riwayat
-    </button>
-    
-    <!-- TOMBOL RESET -->
-    <button onclick="resetIbadahTracker()" class="text-rose-500 hover:underline">Reset Hari Ini</button>
-</div>
-            
-    </div>
-
-    <!-- CARD 2: Doa & Motivasi Sesuai Suasana Hati -->
-    <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col justify-between space-y-4">
-        <div>
-            <div class="flex items-center gap-2 mb-3">
-                <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs backdrop-blur-sm">
-                    <i class="fa-solid fa-heart"></i>
+   <!-- CARD 1: Jurnal Ibadah Harian (Mutaba'ah Yaumiyah) -->
+<div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between space-y-4">
+    <div>
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                    <i class="fa-solid fa-list-check"></i>
                 </div>
                 <div>
-                    <h3 class="text-xs font-bold">Apa Yang Kamu Rasakan?</h3>
-                    <p class="text-[10px] text-emerald-100">Cari penawar hati dari Al-Qur'an & Hadits</p>
+                    <h3 class="text-xs font-bold text-slate-800">Jurnal Ibadah Harian</h3>
+                    <p class="text-[10px] text-slate-400">Mutaba'ah Yaumiyah</p>
                 </div>
             </div>
-            </div>
-
-            <!-- Emotion Pills Buttons -->
-            <div class="flex flex-wrap gap-1.5 mb-3">
-                <button onclick="loadMoodQuote('sedih')" class="px-2.5 py-1 bg-white/10 hover:bg-white/20 active:bg-white text-[11px] rounded-full transition backdrop-blur-sm">Gelisah / Sedih</button>
-                <button onclick="loadMoodQuote('bersyukur')" class="px-2.5 py-1 bg-white/10 hover:bg-white/20 active:bg-white text-[11px] rounded-full transition backdrop-blur-sm">Bersyukur</button>
-                <button onclick="loadMoodQuote('marah')" class="px-2.5 py-1 bg-white/10 hover:bg-white/20 active:bg-white text-[11px] rounded-full transition backdrop-blur-sm">Marah / Emosi</button>
-                <button onclick="loadMoodQuote('lelah')" class="px-2.5 py-1 bg-white/10 hover:bg-white/20 active:bg-white text-[11px] rounded-full transition backdrop-blur-sm">Lelah / Putus Asa</button>
-            </div>
-
-            <!-- Content Quote Display -->
-            <div id="mood-quote-container" class="bg-white/10 rounded-2xl p-3 backdrop-blur-md min-h-[90px] flex flex-col justify-center space-y-1">
-                <p id="mood-text" class="text-xs italic leading-relaxed">"Ingatlah, hanya dengan mengingat Allah hati menjadi tenteram."</p>
-                <span id="mood-source" class="text-[10px] text-emerald-200 font-semibold self-end">— QS. Ar-Ra'd: 28</span>
-            </div>
+            <span id="ibadah-percentage" class="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">0%</span>
         </div>
 
-        <div class="flex justify-between items-center text-[10px] pt-2 border-t border-white/10">
-            <span class="text-emerald-100"><i class="fa-solid fa-sparkles"></i> Penyejuk Hati</span>
-            <button onclick="shareMoodQuote()" class="bg-white text-emerald-700 font-bold px-3 py-1 rounded-full text-[11px] hover:bg-emerald-50 transition flex items-center gap-1 shadow-sm">
-                <i class="fa-solid fa-share-nodes text-[9px]"></i> Share Quote
-            </button>
+        <!-- Progress Bar -->
+        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4">
+            <div id="ibadah-progress-bar" class="bg-emerald-500 h-full w-0 transition-all duration-500 rounded-full"></div>
+        </div>
+
+        <!-- Checklist Items -->
+        <div class="space-y-2 text-xs text-slate-700">
+            <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition">
+                <span class="flex items-center gap-2"><i class="fa-regular fa-circle-dot text-emerald-500"></i> Shalat Berjamaah / On-Time</span>
+                <input type="checkbox" onchange="toggleIbadahItem('shalat')" id="chk-shalat" class="w-4 h-4 accent-emerald-600 rounded">
+            </label>
+            <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-book-quran text-emerald-500"></i> Baca Al-Qur'an (1 Ruku/Juz)</span>
+                <input type="checkbox" onchange="toggleIbadahItem('quran')" id="chk-quran" class="w-4 h-4 accent-emerald-600 rounded">
+            </label>
+            <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-hands-holding-circle text-emerald-500"></i> Dzikir Pagi & Petang</span>
+                <input type="checkbox" onchange="toggleIbadahItem('dzikir')" id="chk-dzikir" class="w-4 h-4 accent-emerald-600 rounded">
+            </label>
+            <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-coins text-emerald-500"></i> Sedekah Subuh / Harian</span>
+                <input type="checkbox" onchange="toggleIbadahItem('sedekah')" id="chk-sedekah" class="w-4 h-4 accent-emerald-600 rounded">
+            </label>
         </div>
     </div>
 
+    <!-- Footer Card 1 -->
+    <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400">
+        <button onclick="openIbadahHistoryModal()" class="text-emerald-600 font-semibold hover:underline flex items-center gap-1">
+            <i class="fa-solid fa-clock-rotate-left text-[9px]"></i> Lihat Riwayat
+        </button>
+        <button onclick="resetIbadahTracker()" class="text-rose-500 hover:underline">Reset Hari Ini</button>
+    </div>
+</div>
+
+<!-- CARD 2: Doa & Motivasi Sesuai Suasana Hati -->
+<div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col justify-between space-y-4">
+    <div>
+        <div class="flex items-center gap-2 mb-3">
+            <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs backdrop-blur-sm">
+                <i class="fa-solid fa-heart"></i>
+            </div>
+            <div>
+                <h3 class="text-xs font-bold">Apa Yang Kamu Rasakan?</h3>
+                <p class="text-[10px] text-emerald-100">Cari penawar hati dari Al-Qur'an & Hadits</p>
+            </div>
+        </div>
+
+        <!-- Emotion Pills Buttons -->
+        <div class="flex flex-wrap gap-1.5 mb-3">
+            <button onclick="loadMoodQuote('sedih')" class="px-2.5 py-1 bg-white/10 hover:bg-white/20 active:bg-white text-[11px] rounded-full transition backdrop-blur-sm">Gelisah / Sedih</button>
+            <button onclick="loadMoodQuote('bersyukur')" class="px-2.5 py-1 bg-white/10 hover:bg-white/20 active:bg-white text-[11px] rounded-full transition backdrop-blur-sm">Bersyukur</button>
+            <button onclick="loadMoodQuote('marah')" class="px-2.5 py-1 bg-white/10 hover:bg-white/20 active:bg-white text-[11px] rounded-full transition backdrop-blur-sm">Marah / Emosi</button>
+            <button onclick="loadMoodQuote('lelah')" class="px-2.5 py-1 bg-white/10 hover:bg-white/20 active:bg-white text-[11px] rounded-full transition backdrop-blur-sm">Lelah / Putus Asa</button>
+        </div>
+
+        <!-- Content Quote Display -->
+        <div id="mood-quote-container" class="bg-white/10 rounded-2xl p-3 backdrop-blur-md min-h-[90px] flex flex-col justify-center space-y-1">
+            <p id="mood-text" class="text-xs italic leading-relaxed">"Ingatlah, hanya dengan mengingat Allah hati menjadi tenteram."</p>
+            <span id="mood-source" class="text-[10px] text-emerald-200 font-semibold self-end">— QS. Ar-Ra'd: 28</span>
+        </div>
+    </div>
+
+    <!-- Footer Card 2 -->
+    <div class="flex justify-between items-center text-[10px] pt-2 border-t border-white/10">
+        <span class="text-emerald-100"><i class="fa-solid fa-sparkles"></i> Penyejuk Hati</span>
+        <button onclick="shareMoodQuote()" class="bg-white text-emerald-700 font-bold px-3 py-1 rounded-full text-[11px] hover:bg-emerald-50 transition flex items-center gap-1 shadow-sm">
+            <i class="fa-solid fa-share-nodes text-[9px]"></i> Share Quote
+        </button>
+    </div>
 </div>
                 
                 <!-- Quick Menu -->
