@@ -53,12 +53,11 @@ export async function searchCityAPI(query) {
 }
 
 // ==========================================
-// 3. HADITS API (Ganti ke Endpoint Hadith Vercel yang Aktif)
+// 3. HADITS API (Endpoint Hadith Vercel)
 // ==========================================
 
 export async function fetchHaditsBookAPI(bookName) {
     try {
-        // Menggunakan Endpoint Hadits yang Aktif & Tanpa 404
         const res = await fetch(`https://hadis-api-id.vercel.app/hadith/${bookName}?page=1&limit=20`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         
@@ -84,19 +83,15 @@ export async function fetchHaditsBookAPI(bookName) {
 }
 
 // ==========================================
-// 4. DOA HARIAN API (Ganti ke Endpoint Doa Publik Bebas CORS)
+// 4. DOA HARIAN API (EQuran.id)
 // ==========================================
 
-// 4. DOA HARIAN API (EQuran.id)
 export async function fetchDoaListAPI() {
     try {
-        // Menggunakan endpoint sesuai dokumentasi gambar: https://equran.id/api/doa
         const res = await fetch('https://equran.id/api/doa');
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         
         const data = await res.json();
-
-        // Data berupa array dari API
         const listDoa = Array.isArray(data) ? data : (data.data || []);
 
         return listDoa.map((d, index) => ({
@@ -111,4 +106,81 @@ export async function fetchDoaListAPI() {
         console.error("Gagal fetch Doa dari EQuran.id:", e);
         return [];
     }
+}
+
+// ==========================================
+// 5. HELPER FIQIH WAKTU SHALAT & SUNNAH
+// ==========================================
+
+export function calculateFiqihTimes(jadwalObj) {
+    if (!jadwalObj || !jadwalObj.subuh || !jadwalObj.dzuhur) return null;
+
+    // A. Waktu Terbit / Syuruq & Estimasi Awal Dhuha (+15 menit)
+    const jamSyuruqStr = jadwalObj.terbit || jadwalObj.syuruq || "06:00";
+    const [sJam, sMenit] = jamSyuruqStr.split(':').map(Number);
+    
+    const timeSyuruq = new Date();
+    timeSyuruq.setHours(sJam, sMenit, 0);
+
+    const timeDhuha = new Date(timeSyuruq.getTime() + 15 * 60000);
+
+    // B. Hitung 1/3 Malam Terakhir (Tahajud)
+    const [mJam, mMenit] = jadwalObj.maghrib.split(':').map(Number);
+    const [subJam, subMenit] = jadwalObj.subuh.split(':').map(Number);
+
+    let tMaghrib = new Date();
+    tMaghrib.setHours(mJam, mMenit, 0);
+
+    let tSubuh = new Date();
+    tSubuh.setDate(tSubuh.getDate() + 1);
+    tSubuh.setHours(subJam, subMenit, 0);
+
+    const totalMalamMs = tSubuh.getTime() - tMaghrib.getTime();
+    const sepertigaMalamMs = totalMalamMs / 3;
+    const timeTahajud = new Date(tSubuh.getTime() - sepertigaMalamMs);
+
+    // C. Status Waktu Haram Realtime
+    const sekarang = new Date();
+    let statusHaram = {
+        isHaram: false,
+        title: "Waktu Diperbolehkan Shalat",
+        desc: "Saat ini diperbolehkan mendirikan shalat sunnah mutlak.",
+        type: "safe"
+    };
+
+    if (sekarang >= timeSyuruq && sekarang < timeDhuha) {
+        statusHaram = {
+            isHaram: true,
+            title: "Waktu Haram Shalat (Syuruq)",
+            desc: "Matahari sedang terbit. Dilarang shalat sunnah mutlak hingga masuk waktu Dhuha.",
+            type: "danger"
+        };
+    } else {
+        const [dJam, dMenit] = jadwalObj.dzuhur.split(':').map(Number);
+        const timeDzuhur = new Date();
+        timeDzuhur.setHours(dJam, dMenit, 0);
+        const timeIstiwa = new Date(timeDzuhur.getTime() - 10 * 60000);
+
+        if (sekarang >= timeIstiwa && sekarang < timeDzuhur) {
+            statusHaram = {
+                isHaram: true,
+                title: "Waktu Haram Shalat (Istiwa)",
+                desc: "Matahari tepat di atas kepala. Dilarang shalat sunnah hingga azan Dzuhur berkumandang.",
+                type: "warning"
+            };
+        }
+    }
+
+    const formatTime = (dateObj) => {
+        const h = String(dateObj.getHours()).padStart(2, '0');
+        const m = String(dateObj.getMinutes()).padStart(2, '0');
+        return `${h}:${m}`;
+    };
+
+    return {
+        syuruq: jamSyuruqStr,
+        dhuha: formatTime(timeDhuha),
+        tahajud: formatTime(timeTahajud),
+        statusHaram: statusHaram
+    };
 }
