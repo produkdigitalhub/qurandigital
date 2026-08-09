@@ -1,0 +1,29 @@
+<div id="kiblat-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex justify-center items-center p-4">
+    <div class="bg-white w-full max-w-xs rounded-3xl p-6 text-center shadow-2xl space-y-4 relative">
+        <div class="flex justify-between items-center">
+            <span class="text-xs font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full">Kompas Kiblat</span>
+            <button id="btn-close-kiblat-modal" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+        <div class="py-2">
+            <p class="text-xs text-slate-500 mb-1" id="kiblat-location-info">Lokasi Anda: Makassar</p>
+            <p class="text-xs font-bold text-slate-700" id="kiblat-degree-info">Arah Kiblat: ~294° N-W</p>
+        </div>
+
+        <div class="relative w-48 h-48 mx-auto flex items-center justify-center border-4 border-slate-100 rounded-full shadow-inner bg-slate-50">
+            <div id="compass-dial" class="absolute inset-0 flex items-center justify-center transition-transform duration-200">
+                <span class="absolute top-2 text-xs font-extrabold text-slate-400">N</span>
+                <span class="absolute right-2 text-xs font-extrabold text-slate-400">E</span>
+                <span class="absolute bottom-2 text-xs font-extrabold text-slate-400">S</span>
+                <span class="absolute left-2 text-xs font-extrabold text-slate-400">W</span>
+                
+                <div id="qibla-pointer" class="w-1 h-20 bg-rose-500 rounded-full origin-bottom flex flex-col items-center justify-start -translate-y-1/2">
+                    <i class="fa-solid fa-kaaba text-amber-400 text-xs -mt-2"></i>
+                </div>
+            </div>
+            <div class="w-4 h-4 bg-slate-800 rounded-full z-10 border-2 border-white shadow"></div>
+        </div>
+
+        <p class="text-[10px] text-slate-400 italic">Pegang HP secara mendatar untuk akurasi terbaik.</p>
+    </div>
+</div>
