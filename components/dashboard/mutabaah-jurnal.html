@@ -1,0 +1,46 @@
+<div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-100 shadow-sm flex flex-col justify-between space-y-4">
+    <div>
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold text-slate-800">Jurnal Ibadah Harian</h3>
+                    <p class="text-[10px] text-slate-400">Mutaba'ah Yaumiyah</p>
+                </div>
+            </div>
+            <span id="ibadah-percentage" class="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">0%</span>
+        </div>
+
+        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4">
+            <div id="ibadah-progress-bar" class="bg-emerald-500 h-full w-0 transition-all duration-500 rounded-full"></div>
+        </div>
+
+        <div class="space-y-2 text-xs text-slate-700">
+            <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition">
+                <span class="flex items-center gap-2"><i class="fa-regular fa-circle-dot text-emerald-500"></i> Shalat Berjamaah / On-Time</span>
+                <input type="checkbox" onchange="toggleIbadahItem('shalat')" id="chk-shalat" class="w-4 h-4 accent-emerald-600 rounded">
+            </label>
+            <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-book-quran text-emerald-500"></i> Baca Al-Qur'an (1 Ruku/Juz)</span>
+                <input type="checkbox" onchange="toggleIbadahItem('quran')" id="chk-quran" class="w-4 h-4 accent-emerald-600 rounded">
+            </label>
+            <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-hands-holding-circle text-emerald-500"></i> Dzikir Pagi & Petang</span>
+                <input type="checkbox" onchange="toggleIbadahItem('dzikir')" id="chk-dzikir" class="w-4 h-4 accent-emerald-600 rounded">
+            </label>
+            <label class="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-coins text-emerald-500"></i> Sedekah Subuh / Harian</span>
+                <input type="checkbox" onchange="toggleIbadahItem('sedekah')" id="chk-sedekah" class="w-4 h-4 accent-emerald-600 rounded">
+            </label>
+        </div>
+    </div>
+
+    <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400">
+        <button onclick="openIbadahHistoryModal()" class="text-emerald-600 font-semibold hover:underline flex items-center gap-1">
+            <i class="fa-solid fa-clock-rotate-left text-[9px]"></i> Lihat Riwayat
+        </button>
+        <button onclick="resetIbadahTracker()" class="text-rose-500 hover:underline">Reset Hari Ini</button>
+    </div>
+</div>
