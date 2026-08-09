@@ -1,26 +1,24 @@
 import { initializeUIComponents, showToast } from './ui.js';
-import { fetchPrayerTimes, fetchDailyAyat, fetchDailyHadith } from './api.js';
+// Ganti nama fetch* menjadi get* sesuai deklarasi di api.js
+import { fetchPrayerTimes, getDailyAyat, getDailyHadits } from './api.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Muat komponen HTML secara asynchronous terlebih dahulu
+    // 1. Muat komponen HTML terlebih dahulu
     await initializeUIComponents();
 
-    // 2. Inisialisasi Fitur & API setelah elemen DOM komponen tersedia
+    // 2. Panggil API setelah elemen UI siap
     try {
         showToast("Memuat data...");
         await Promise.all([
             fetchPrayerTimes(),
-            fetchDailyAyat(),
-            fetchDailyHadith()
+            getDailyAyat(),
+            getDailyHadits()
         ]);
         showToast("Berhasil memuat data");
     } catch (error) {
         console.error("Error loading initial data:", error);
         showToast("Gagal memuat beberapa data API");
     }
-
-    // 3. Setup Navigation Listener
-    setupNavigation();
 });
 
 function setupNavigation() {
