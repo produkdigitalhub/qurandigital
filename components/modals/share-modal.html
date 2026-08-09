@@ -1,0 +1,29 @@
+<div id="share-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex justify-center items-center p-4">
+    <div class="bg-white w-full max-w-xs rounded-3xl p-5 shadow-2xl text-center space-y-4">
+        <div class="flex justify-between items-center border-b pb-2">
+            <h3 class="text-xs font-bold text-slate-800"><i class="fa-solid fa-share-nodes text-emerald-600 mr-1.5"></i> Bagikan Penyejuk Hati</h3>
+            <button onclick="closeShareModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        
+        <p class="text-[11px] text-slate-500 italic bg-slate-50 p-2.5 rounded-xl border border-slate-100" id="share-modal-preview"> Quote preview... </p>
+
+        <div class="grid grid-cols-4 gap-2 pt-1">
+            <button onclick="shareToPlatform('wa')" class="flex flex-col items-center gap-1 p-2 rounded-2xl hover:bg-emerald-50 transition">
+                <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center text-lg shadow-sm"><i class="fa-brands fa-whatsapp"></i></div>
+                <span class="text-[9px] font-medium text-slate-600">WhatsApp</span>
+            </button>
+            <button onclick="shareToPlatform('telegram')" class="flex flex-col items-center gap-1 p-2 rounded-2xl hover:bg-sky-50 transition">
+                <div class="w-10 h-10 rounded-full bg-sky-500 text-white flex items-center justify-center text-lg shadow-sm"><i class="fa-brands fa-telegram"></i></div>
+                <span class="text-[9px] font-medium text-slate-600">Telegram</span>
+            </button>
+            <button onclick="shareToPlatform('twitter')" class="flex flex-col items-center gap-1 p-2 rounded-2xl hover:bg-slate-100 transition">
+                <div class="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center text-lg shadow-sm"><i class="fa-brands fa-x-twitter"></i></div>
+                <span class="text-[9px] font-medium text-slate-600">X (Twitter)</span>
+            </button>
+            <button onclick="shareToPlatform('copy')" class="flex flex-col items-center gap-1 p-2 rounded-2xl hover:bg-amber-50 transition">
+                <div class="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center text-lg shadow-sm"><i class="fa-regular fa-copy"></i></div>
+                <span class="text-[9px] font-medium text-slate-600">Salin Teks</span>
+            </button>
+        </div>
+    </div>
+</div>
