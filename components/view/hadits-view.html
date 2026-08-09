@@ -1,0 +1,23 @@
+<div id="view-hadits" class="hidden space-y-4">
+    <div class="flex justify-between items-center px-1">
+        <div>
+            <h2 class="text-lg font-bold text-slate-800">Kutubut Tis'ah (9 Kitab Hadis)</h2>
+            <p class="text-xs text-slate-500">Kumpulan Hadis Shahih Rasulullah SAW</p>
+        </div>
+    </div>
+    <div class="grid grid-cols-3 gap-2.5" id="hadits-books-grid">
+        <button data-book="bukhari" class="p-3 bg-white border-2 border-emerald-500 rounded-2xl text-center shadow-sm">
+            <p class="font-bold text-xs text-emerald-800">Bukhari</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">7.008 Hadis</p>
+        </button>
+        <button data-book="muslim" class="p-3 bg-white border border-slate-200 rounded-2xl text-center shadow-sm hover:border-emerald-500">
+            <p class="font-bold text-xs text-slate-800">Muslim</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">5.362 Hadis</p>
+        </button>
+        <button data-book="tirmidzi" class="p-3 bg-white border border-slate-200 rounded-2xl text-center shadow-sm hover:border-emerald-500">
+            <p class="font-bold text-xs text-slate-800">Tirmidzi</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">3.956 Hadis</p>
+        </button>
+    </div>
+    <div id="hadits-feed-container" class="space-y-3"></div>
+</div>
