@@ -1,0 +1,36 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NurIslam - Al-Qur'an, Hadis & Jadwal Shalat</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    arabic: ['"Amiri"', 'serif'],
+                },
+                colors: {
+                    emerald: {
+                        50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981',
+                        600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b',
+                    },
+                    gold: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' }
+                }
+            }
+        }
+    }
+</script>
+<style>
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .active-tab { color: #047857; font-weight: 700; }
+    .active-tab i { transform: translateY(-2px); }
+</style>
