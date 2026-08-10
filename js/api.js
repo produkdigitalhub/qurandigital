@@ -88,14 +88,34 @@ export async function getDailyAyat() {
 }
 
 // 6. Ambil Buku Hadis
-export async function fetchHaditsBookAPI(bookName = 'bukhari') {
+// Ganti fungsi fetchHaditsBookAPI di api.js dengan ini:
+
+export async function fetchHaditsBookAPI(book = 'bukhari') {
     try {
-        const response = await fetch(`https://api.hadith.gq/hadith/${bookName}?page=1&limit=20`);
-        if (!response.ok) throw new Error('Network response was not ok');
-        return await response.json();
-    } catch (error) {
-        console.error(`Gagal mengambil hadits ${bookName}:`, error);
-        return null;
+        // Menggunakan API Hadis Indonesia yang stabil dan aktif
+        const response = await fetch(`https://hadis-api-id.vercel.app/hadith/${book}?page=1&limit=20`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const resData = await response.json();
+        
+        // Memastikan format return seragam (mencakup array hadiths & code 200)
+        return {
+            code: 200,
+            data: {
+                hadiths: resData.items || resData.data || []
+            }
+        };
+    } catch (err) {
+        console.warn(`Gagal mengambil hadits ${book}:`, err);
+        
+        // Fallback data kosong agar app.js tidak crash
+        return {
+            code: 500,
+            data: { hadiths: [] }
+        };
     }
 }
 
