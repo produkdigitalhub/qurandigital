@@ -5,7 +5,7 @@ import {
     fetchPrayerScheduleAPI, 
     searchCityAPI, 
     fetchHaditsBookAPI,
-    fetchDoaListAPI 
+    fetchDoaList
 } from './api.js';
 import { 
     showToast, 
