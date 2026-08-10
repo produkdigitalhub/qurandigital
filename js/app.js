@@ -52,8 +52,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     initApp(); // Jalankan logika app setelah HTML siap
 });
 
-// ... sisa kode ke bawah (initApp, setHijriDate, dst.) tetap sama
-
 async function initApp() {
     setHijriDate();
     initEventListeners();
@@ -309,23 +307,23 @@ async function renderHaditsFeed(bookName) {
     }
 }
 
-// 4. EVENT LISTENERS
+// 4. EVENT LISTENERS UTAMA (EVENT DELEGATION)
 function initEventListeners() {
-    // 1. EVENT DELEGATED CLICK LISTENER (Menangani semua klik tombol menu & navigasi secara terpusat)
+    // A. Terpusat untuk semua aksi Klik
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('button, .city-item, .nav-item');
         if (!btn) return;
 
         const id = btn.id;
 
-        // Navigasi Menu Utama Dashboard
+        // Navigasi Menu Utama Dashboard & Bottom Nav
         if (id === 'btn-menu-quran' || id === 'nav-quran') switchTab('quran');
         else if (id === 'btn-menu-doa' || id === 'nav-doa') switchTab('doa');
         else if (id === 'btn-menu-hadits' || id === 'nav-hadits' || id === 'btn-more-hadits') switchTab('hadits');
         else if (id === 'btn-menu-sholat' || id === 'btn-header-city') switchTab('sholat');
         else if (id === 'nav-dashboard') switchTab('dashboard');
         
-        // Filter Doa Dzikir Pagi / Petang
+        // Quick Filter Doa (Dzikir Pagi / Petang)
         else if (id === 'btn-menu-pagi') switchTab('doa', 'pagi');
         else if (id === 'btn-menu-petang') switchTab('doa', 'petang');
         
@@ -341,14 +339,80 @@ function initEventListeners() {
             document.getElementById('tasbih-modal')?.classList.add('hidden');
         }
         
-        // Fitur Kiblat
+        // Kiblat
         else if (id === 'btn-menu-kiblat') {
             showToast("Arah Kiblat Indonesia ~294° N-W.");
-            // Atau alihkan ke tab sholat/kiblat jika ada: switchTab('sholat');
+        }
+
+        // Surah Modal Close
+        else if (id === 'btn-close-surah-modal') {
+            document.getElementById('surah-modal')?.classList.add('hidden');
+        }
+
+        // Daily Ayat Audio
+        else if (id === 'daily-audio-btn') {
+            if (state.dailyAyatAudio) { 
+                new Audio(state.dailyAyatAudio).play(); 
+                showToast("Memutar audio..."); 
+            }
+        }
+
+        // Tasbih Controls
+        else if (id === 'btn-count-tasbih') {
+            state.tasbihCount++;
+            const el = document.getElementById('tasbih-count');
+            if (el) el.innerText = state.tasbihCount;
+            if (state.tasbihCount % 33 === 0) showToast("33 Hitungan Tercapai!");
+        }
+        else if (id === 'btn-reset-tasbih') {
+            state.tasbihCount = 0;
+            const el = document.getElementById('tasbih-count');
+            if (el) el.innerText = '0';
+        }
+        else if (id === 'btn-next-tasbih') {
+            if (!state.tasbihPhrases || state.tasbihPhrases.length === 0) return;
+            state.tasbihIndex = (state.tasbihIndex + 1) % state.tasbihPhrases.length;
+            const p = state.tasbihPhrases[state.tasbihIndex];
+            
+            const phraseEl = document.getElementById('tasbih-phrase');
+            const latinEl = document.getElementById('tasbih-latin');
+            const countEl = document.getElementById('tasbih-count');
+
+            if (phraseEl) phraseEl.innerText = p.arab;
+            if (latinEl) latinEl.innerText = p.latin;
+            state.tasbihCount = 0;
+            if (countEl) countEl.innerText = '0';
+        }
+
+        // Pilihan Kitab Hadis
+        else if (btn.closest('#hadits-books-grid')) {
+            const bookName = btn.dataset.book;
+            if (bookName) {
+                document.querySelectorAll('#hadits-books-grid button').forEach(b => {
+                    b.classList.remove('border-2', 'border-emerald-500');
+                    b.classList.add('border', 'border-slate-200');
+                });
+                btn.classList.remove('border-slate-200');
+                btn.classList.add('border-2', 'border-emerald-500');
+                renderHaditsFeed(bookName);
+            }
+        }
+
+        // Filter Chips Doa
+        else if (btn.closest('#doa-category-chips')) {
+            document.querySelectorAll('#doa-category-chips button').forEach(b => {
+                b.classList.remove('bg-emerald-600', 'text-white', 'shadow-sm');
+                b.classList.add('bg-white', 'border', 'border-slate-200', 'text-slate-600');
+            });
+            btn.classList.remove('bg-white', 'border', 'border-slate-200', 'text-slate-600');
+            btn.classList.add('bg-emerald-600', 'text-white', 'shadow-sm');
+
+            const kat = btn.dataset.cat;
+            filterDoa(kat);
         }
     });
 
-    // 2. Pencarian Global Input Listener
+    // B. Pencarian Global Input Listener
     const globalSearchInput = document.getElementById('global-search-input');
     if (globalSearchInput) {
         globalSearchInput.addEventListener('input', (e) => {
@@ -379,143 +443,35 @@ function initEventListeners() {
         });
     }
 
-    // 3. Logika Penghitung Tasbih
-    document.getElementById('btn-count-tasbih')?.addEventListener('click', () => {
-        state.tasbihCount++;
-        const el = document.getElementById('tasbih-count');
-        if (el) el.innerText = state.tasbihCount;
-        if (state.tasbihCount % 33 === 0) showToast("33 Hitungan Tercapai!");
-    });
+    // C. Pencarian Kota
+    const btnSearchCity = document.getElementById('btn-search-city');
+    if (btnSearchCity) {
+        btnSearchCity.addEventListener('click', async () => {
+            const input = document.getElementById('city-search-input');
+            if (!input) return;
+            const q = input.value.trim();
+            if (!q) return;
+            const res = await searchCityAPI(q);
+            const container = document.getElementById('city-search-results');
+            if (res && res.status && res.data.length > 0 && container) {
+                container.innerHTML = res.data.map(c => `
+                    <div class="city-item p-2 hover:bg-emerald-50 rounded-lg cursor-pointer flex justify-between items-center" data-id="${c.id}">
+                        <span>${c.lokasi}</span><i class="fa-solid fa-chevron-right text-[10px]"></i>
+                    </div>
+                `).join('');
 
-    document.getElementById('btn-reset-tasbih')?.addEventListener('click', () => {
-        state.tasbihCount = 0;
-        const el = document.getElementById('tasbih-count');
-        if (el) el.innerText = '0';
-    });
-
-    // 4. Inisialisasi Kompas
-    initCompass();
-}
-    // Pilihan Kitab Hadis
-    document.querySelectorAll('#hadits-books-grid button').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const bookName = e.currentTarget.dataset.book;
-            document.querySelectorAll('#hadits-books-grid button').forEach(b => {
-                b.classList.remove('border-2', 'border-emerald-500');
-                b.classList.add('border', 'border-slate-200');
-            });
-            e.currentTarget.classList.remove('border-slate-200');
-            e.currentTarget.classList.add('border-2', 'border-emerald-500');
-            renderHaditsFeed(bookName);
-        });
-    });
-
-    // Filter Chips Doa
-    document.querySelectorAll('#doa-category-chips button').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('#doa-category-chips button').forEach(b => {
-                b.classList.remove('bg-emerald-600', 'text-white', 'shadow-sm');
-                b.classList.add('bg-white', 'border', 'border-slate-200', 'text-slate-600');
-            });
-            const target = e.currentTarget;
-            target.classList.remove('bg-white', 'border', 'border-slate-200', 'text-slate-600');
-            target.classList.add('bg-emerald-600', 'text-white', 'shadow-sm');
-
-            const kat = target.dataset.cat;
-            filterDoa(kat);
-        });
-    });
-
-    // Navigasi Bottom Bar
-    document.getElementById('nav-dashboard')?.addEventListener('click', () => switchTab('dashboard'));
-    document.getElementById('nav-quran')?.addEventListener('click', () => switchTab('quran'));
-    document.getElementById('nav-doa')?.addEventListener('click', () => switchTab('doa'));
-    document.getElementById('nav-hadits')?.addEventListener('click', () => switchTab('hadits'));
-    document.getElementById('btn-header-city')?.addEventListener('click', () => switchTab('sholat'));
-
-    // Quick Menu Dashboard
-    document.getElementById('btn-menu-quran')?.addEventListener('click', () => switchTab('quran'));
-    document.getElementById('btn-menu-doa')?.addEventListener('click', () => switchTab('doa'));
-    document.getElementById('btn-menu-hadits')?.addEventListener('click', () => switchTab('hadits'));
-    document.getElementById('btn-menu-sholat')?.addEventListener('click', () => switchTab('sholat'));
-    document.getElementById('btn-menu-pagi')?.addEventListener('click', () => switchTab('doa', 'pagi'));
-    document.getElementById('btn-menu-petang')?.addEventListener('click', () => switchTab('doa', 'petang'));
-    document.getElementById('btn-more-hadits')?.addEventListener('click', () => switchTab('hadits'));
-    document.getElementById('btn-menu-kiblat')?.addEventListener('click', () => showToast("Arah Kiblat Indonesia ~294° N-W."));
-
-    // Tombol Modal Kajian & Nasihat Telegram
-    document.getElementById('btn-menu-kajian')?.addEventListener('click', () => openTelegramModal('kajian'));
-    document.getElementById('btn-menu-nasihat')?.addEventListener('click', () => openTelegramModal('nasihat'));
-
-    // Tasbih Modal
-    const openTasbih = () => document.getElementById('tasbih-modal')?.classList.remove('hidden');
-    const closeTasbih = () => document.getElementById('tasbih-modal')?.classList.add('hidden');
-    document.getElementById('btn-menu-tasbih')?.addEventListener('click', openTasbih);
-    document.getElementById('nav-float-tasbih')?.addEventListener('click', openTasbih);
-    document.getElementById('btn-close-tasbih-modal')?.addEventListener('click', closeTasbih);
-
-    document.getElementById('btn-count-tasbih')?.addEventListener('click', () => {
-        state.tasbihCount++;
-        const el = document.getElementById('tasbih-count');
-        if (el) el.innerText = state.tasbihCount;
-        if (state.tasbihCount % 33 === 0) showToast("33 Hitungan Tercapai!");
-    });
-
-    document.getElementById('btn-reset-tasbih')?.addEventListener('click', () => {
-        state.tasbihCount = 0;
-        const el = document.getElementById('tasbih-count');
-        if (el) el.innerText = '0';
-    });
-
-    document.getElementById('btn-next-tasbih')?.addEventListener('click', () => {
-        if (!state.tasbihPhrases || state.tasbihPhrases.length === 0) return;
-        state.tasbihIndex = (state.tasbihIndex + 1) % state.tasbihPhrases.length;
-        const p = state.tasbihPhrases[state.tasbihIndex];
-        
-        const phraseEl = document.getElementById('tasbih-phrase');
-        const latinEl = document.getElementById('tasbih-latin');
-        const countEl = document.getElementById('tasbih-count');
-
-        if (phraseEl) phraseEl.innerText = p.arab;
-        if (latinEl) latinEl.innerText = p.latin;
-        state.tasbihCount = 0;
-        if (countEl) countEl.innerText = '0';
-    });
-
-    // Copy & Audio Ayat Harian
-    document.getElementById('daily-audio-btn')?.addEventListener('click', () => {
-        if (state.dailyAyatAudio) { new Audio(state.dailyAyatAudio).play(); showToast("Memutar audio..."); }
-    });
-
-    document.getElementById('btn-close-surah-modal')?.addEventListener('click', () => {
-        document.getElementById('surah-modal')?.classList.add('hidden');
-    });
-
-    // Pencarian Kota
-    document.getElementById('btn-search-city')?.addEventListener('click', async () => {
-        const input = document.getElementById('city-search-input');
-        if (!input) return;
-        const q = input.value.trim();
-        if (!q) return;
-        const res = await searchCityAPI(q);
-        const container = document.getElementById('city-search-results');
-        if (res && res.status && res.data.length > 0 && container) {
-            container.innerHTML = res.data.map(c => `
-                <div class="city-item p-2 hover:bg-emerald-50 rounded-lg cursor-pointer flex justify-between items-center" data-id="${c.id}">
-                    <span>${c.lokasi}</span><i class="fa-solid fa-chevron-right text-[10px]"></i>
-                </div>
-            `).join('');
-
-            container.querySelectorAll('.city-item').forEach(el => {
-                el.addEventListener('click', () => {
-                    loadPrayerSchedule(el.dataset.id);
-                    container.innerHTML = '';
-                    showToast("Lokasi diubah!");
+                container.querySelectorAll('.city-item').forEach(el => {
+                    el.addEventListener('click', () => {
+                        loadPrayerSchedule(el.dataset.id);
+                        container.innerHTML = '';
+                        showToast("Lokasi diubah!");
+                    });
                 });
-            });
-        }
-    });
+            }
+        });
+    }
 
+    // D. Inisialisasi Kompas Kiblat
     initCompass();
 }
 
