@@ -14,8 +14,9 @@ import {
     renderPrayerGridUI, 
     renderFullPrayerScheduleUI 
 } from './ui.js';
-
+// TAMBAHKAN IMPORT INI:
 import { loadTelegramFeed } from './telegramfeed.js';
+
 function openTelegramModal(type) {
     const modal = document.getElementById('telegram-modal');
     if (modal) {
@@ -34,7 +35,7 @@ async function safeExec(fn, name) {
     }
 }
 
-// Inisialisasi Utama Aplikasi (Hanya dipanggil SEKALI)
+// Inisialisasi Utama Aplikasi
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
 });
@@ -53,7 +54,7 @@ async function initApp() {
     // 1. Muat Jadwal Sholat Utama
     await safeExec(() => loadPrayerSchedule(state.cityId), 'Jadwal Sholat');
 
-    // 2. Jalankan pemanggilan data mandiri (Jika 1 API error/gagal, yang lain tetap jalan)
+    // 2. Jalankan pemanggilan data mandiri
     await Promise.allSettled([
         safeExec(() => loadDailyAyat(), 'Ayat Harian'),
         safeExec(() => loadDailyHadits(), 'Hadits Harian'),
