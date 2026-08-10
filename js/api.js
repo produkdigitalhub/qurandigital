@@ -1,9 +1,8 @@
 /**
  * API Service Module
- * Menyediakan fungsi pemanggilan API untuk Al-Qur'an, Hadis, Doa, dan Jadwal Sholat.
  */
 
-// 1. Ambil Jadwal Shalat
+// 1. Ambil Jadwal Shalat (Kompatibel dengan nama fetchPrayerScheduleAPI)
 export async function fetchPrayerScheduleAPI(cityId = '1301', year, month, day) {
     try {
         const today = new Date();
@@ -13,8 +12,7 @@ export async function fetchPrayerScheduleAPI(cityId = '1301', year, month, day) 
 
         const response = await fetch(`https://api.myquran.com/v2/sholat/jadwal/${cityId}/${y}/${m}/${d}`);
         const data = await response.json();
-        
-        // Update DOM langsung jika elemen ada (Compatibility)
+
         if (data.status && data.data && data.data.jadwal) {
             updatePrayerUI(data.data.jadwal);
         }
@@ -25,7 +23,7 @@ export async function fetchPrayerScheduleAPI(cityId = '1301', year, month, day) 
     }
 }
 
-// Alias untuk fetchPrayerTimes
+// Alias untuk nama fungsi lama
 export const fetchPrayerTimes = fetchPrayerScheduleAPI;
 
 // 2. Cari Kota untuk Jadwal Sholat
@@ -126,7 +124,7 @@ export async function getDailyHadits() {
     }
 }
 
-// 8. Ambil Daftar Doa (Disediakan dua nama ekspor agar kompatibel dengan app.js)
+// 8. Ambil Daftar Doa (Disediakan ekspor fetchDoaListAPI & fetchDoaList)
 export async function fetchDoaListAPI() {
     try {
         const response = await fetch('https://equran.id/api/doa');
@@ -144,7 +142,7 @@ export async function fetchDoaList() {
 
     if (!container) return data;
 
-    if (data.length > 0) {
+    if (data && data.length > 0) {
         container.innerHTML = '';
         data.slice(0, 15).forEach((doa, index) => {
             const item = document.createElement('div');
@@ -165,7 +163,7 @@ export async function fetchDoaList() {
     return data;
 }
 
-// Helper Internal
+// Helper Internal Update Jadwal Sholat
 function updatePrayerUI(jadwal) {
     if (!jadwal) return;
     const subuh = document.getElementById('time-subuh');
