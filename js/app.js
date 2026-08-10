@@ -1,6 +1,7 @@
 import { state } from './config.js';
+
+// 1. IMPORT DARI api.js (Hanya API Data)
 import { 
-    initializeUIComponents,
     fetchSurahListAPI, 
     fetchSurahDetailAPI, 
     fetchPrayerScheduleAPI, 
@@ -8,15 +9,18 @@ import {
     fetchHaditsBookAPI,
     fetchDoaList
 } from './api.js';
+
+// 2. IMPORT DARI ui.js (Komponen & Render Tampilan)
 import { 
+    initializeUIComponents,
     showToast, 
     renderSurahListUI, 
     renderDoaListUI, 
     renderPrayerGridUI, 
     renderFullPrayerScheduleUI 
-} from './ui.js';
-// TAMBAHKAN IMPORT INI:
+} from './ui.js?v=1.1';
 
+// 3. IMPORT DARI telegramfeed.js
 import { loadTelegramFeed } from './telegramfeed.js';
 
 function openTelegramModal(type) {
@@ -37,10 +41,18 @@ async function safeExec(fn, name) {
     }
 }
 
-// Inisialisasi Utama Aplikasi
-document.addEventListener('DOMContentLoaded', () => {
-    initApp();
+// Inisialisasi Utama Aplikasi (Injeksi Komponen HTML Dulu)
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await initializeUIComponents(); // Muat file HTML komponen
+    } catch (err) {
+        console.error("Gagal memuat komponen UI HTML:", err);
+    }
+    
+    initApp(); // Jalankan logika app setelah HTML siap
 });
+
+// ... sisa kode ke bawah (initApp, setHijriDate, dst.) tetap sama
 
 async function initApp() {
     setHijriDate();
