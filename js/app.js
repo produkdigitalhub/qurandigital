@@ -311,6 +311,44 @@ async function renderHaditsFeed(bookName) {
 
 // 4. EVENT LISTENERS
 function initEventListeners() {
+    // 1. EVENT DELEGATED CLICK LISTENER (Menangani semua klik tombol menu & navigasi secara terpusat)
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('button, .city-item, .nav-item');
+        if (!btn) return;
+
+        const id = btn.id;
+
+        // Navigasi Menu Utama Dashboard
+        if (id === 'btn-menu-quran' || id === 'nav-quran') switchTab('quran');
+        else if (id === 'btn-menu-doa' || id === 'nav-doa') switchTab('doa');
+        else if (id === 'btn-menu-hadits' || id === 'nav-hadits' || id === 'btn-more-hadits') switchTab('hadits');
+        else if (id === 'btn-menu-sholat' || id === 'btn-header-city') switchTab('sholat');
+        else if (id === 'nav-dashboard') switchTab('dashboard');
+        
+        // Filter Doa Dzikir Pagi / Petang
+        else if (id === 'btn-menu-pagi') switchTab('doa', 'pagi');
+        else if (id === 'btn-menu-petang') switchTab('doa', 'petang');
+        
+        // Modal Kajian & Nasihat (Telegram)
+        else if (id === 'btn-menu-kajian') openTelegramModal('kajian');
+        else if (id === 'btn-menu-nasihat') openTelegramModal('nasihat');
+        
+        // Modal Tasbih
+        else if (id === 'btn-menu-tasbih' || id === 'nav-float-tasbih') {
+            document.getElementById('tasbih-modal')?.classList.remove('hidden');
+        }
+        else if (id === 'btn-close-tasbih-modal') {
+            document.getElementById('tasbih-modal')?.classList.add('hidden');
+        }
+        
+        // Fitur Kiblat
+        else if (id === 'btn-menu-kiblat') {
+            showToast("Arah Kiblat Indonesia ~294° N-W.");
+            // Atau alihkan ke tab sholat/kiblat jika ada: switchTab('sholat');
+        }
+    });
+
+    // 2. Pencarian Global Input Listener
     const globalSearchInput = document.getElementById('global-search-input');
     if (globalSearchInput) {
         globalSearchInput.addEventListener('input', (e) => {
@@ -335,18 +373,29 @@ function initEventListeners() {
                 renderDoaListUI(filteredDoa);
             }
 
-            const haditsCards = document.querySelectorAll('#hadits-feed-container > div');
-            haditsCards.forEach(card => {
-                const text = card.innerText.toLowerCase();
-                card.classList.toggle('hidden', !text.includes(query));
-            });
-
             if (query.length > 0 && state.activeTab === 'dashboard') {
                 switchTab('quran');
             }
         });
     }
 
+    // 3. Logika Penghitung Tasbih
+    document.getElementById('btn-count-tasbih')?.addEventListener('click', () => {
+        state.tasbihCount++;
+        const el = document.getElementById('tasbih-count');
+        if (el) el.innerText = state.tasbihCount;
+        if (state.tasbihCount % 33 === 0) showToast("33 Hitungan Tercapai!");
+    });
+
+    document.getElementById('btn-reset-tasbih')?.addEventListener('click', () => {
+        state.tasbihCount = 0;
+        const el = document.getElementById('tasbih-count');
+        if (el) el.innerText = '0';
+    });
+
+    // 4. Inisialisasi Kompas
+    initCompass();
+}
     // Pilihan Kitab Hadis
     document.querySelectorAll('#hadits-books-grid button').forEach(btn => {
         btn.addEventListener('click', (e) => {
