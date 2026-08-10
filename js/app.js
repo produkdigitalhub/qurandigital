@@ -1,5 +1,6 @@
 import { state } from './config.js';
 import { 
+    initializeUIComponents,
     fetchSurahListAPI, 
     fetchSurahDetailAPI, 
     fetchPrayerScheduleAPI, 
@@ -15,6 +16,7 @@ import {
     renderFullPrayerScheduleUI 
 } from './ui.js';
 // TAMBAHKAN IMPORT INI:
+
 import { loadTelegramFeed } from './telegramfeed.js';
 
 function openTelegramModal(type) {
