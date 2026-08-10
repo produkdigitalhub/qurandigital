@@ -245,3 +245,17 @@ export async function loadTelegramFeed() {
         }
     }
 }
+
+// Tambahkan kode ini di baris paling bawah telegramfeed.js
+
+export function openTelegramModal(type) {
+    const channel = TELEGRAM_CHANNELS[type] || TELEGRAM_CHANNELS.kajian;
+    const modal = document.getElementById('telegram-modal');
+    
+    if (modal) {
+        modal.classList.remove('hidden');
+    } else {
+        // Fallback jika modal element belum ada di HTML, langsung buka Telegram
+        window.open(channel.url, '_blank');
+    }
+}
