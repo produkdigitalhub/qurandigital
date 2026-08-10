@@ -1,30 +1,71 @@
 /**
  * API Service Module
+ * Menyediakan fungsi pemanggilan API untuk Al-Qur'an, Hadis, Doa, dan Jadwal Sholat.
  */
 
 // 1. Ambil Jadwal Shalat
-export async function fetchPrayerTimes(cityId = '1301') { // Default Makassar/Jakarta
+export async function fetchPrayerScheduleAPI(cityId = '1301', year, month, day) {
     try {
         const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
+        const y = year || today.getFullYear();
+        const m = month || String(today.getMonth() + 1).padStart(2, '0');
+        const d = day || String(today.getDate()).padStart(2, '0');
 
-        const response = await fetch(`https://api.myquran.com/v2/sholat/jadwal/${cityId}/${year}/${month}/${day}`);
+        const response = await fetch(`https://api.myquran.com/v2/sholat/jadwal/${cityId}/${y}/${m}/${d}`);
         const data = await response.json();
-
-        if (data.status && data.data) {
+        
+        // Update DOM langsung jika elemen ada (Compatibility)
+        if (data.status && data.data && data.data.jadwal) {
             updatePrayerUI(data.data.jadwal);
         }
+        return data;
     } catch (error) {
         console.error("Gagal mengambil jadwal shalat:", error);
+        return null;
     }
 }
 
-// 2. Ambil Ayat Harian
+// Alias untuk fetchPrayerTimes
+export const fetchPrayerTimes = fetchPrayerScheduleAPI;
+
+// 2. Cari Kota untuk Jadwal Sholat
+export async function searchCityAPI(keyword) {
+    try {
+        const response = await fetch(`https://api.myquran.com/v2/sholat/kota/cari/${keyword}`);
+        return await response.json();
+    } catch (error) {
+        console.error("Gagal mencari kota:", error);
+        return null;
+    }
+}
+
+// 3. Ambil Daftar Surah Al-Qur'an
+export async function fetchSurahListAPI() {
+    try {
+        const response = await fetch('https://equran.id/api/v2/surat');
+        const data = await response.json();
+        return data.data || [];
+    } catch (error) {
+        console.error("Gagal mengambil daftar surah:", error);
+        return [];
+    }
+}
+
+// 4. Ambil Detail Surah & Ayat
+export async function fetchSurahDetailAPI(surahNomor) {
+    try {
+        const response = await fetch(`https://equran.id/api/v2/surat/${surahNomor}`);
+        const data = await response.json();
+        return data.data || null;
+    } catch (error) {
+        console.error(`Gagal mengambil detail surah ${surahNomor}:`, error);
+        return null;
+    }
+}
+
+// 5. Ambil Ayat Harian
 export async function getDailyAyat() {
     try {
-        // Random ayat antara 1-6236
         const randomAyat = Math.floor(Math.random() * 6236) + 1;
         const response = await fetch(`https://api.alquran.cloud/v1/ayah/${randomAyat}/editions/quran-uthmani,id.indonesian`);
         const data = await response.json();
@@ -48,7 +89,19 @@ export async function getDailyAyat() {
     }
 }
 
-// 3. Ambil Hadis Harian
+// 6. Ambil Buku Hadis
+export async function fetchHaditsBookAPI(bookName = 'bukhari') {
+    try {
+        const response = await fetch(`https://api.hadith.gq/hadith/${bookName}?page=1&limit=20`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+    } catch (error) {
+        console.error(`Gagal mengambil hadits ${bookName}:`, error);
+        return null;
+    }
+}
+
+// 7. Ambil Hadis Harian
 export async function getDailyHadits() {
     try {
         const response = await fetch('https://api.hadith.gq/hadith/bukhari/random');
@@ -63,7 +116,6 @@ export async function getDailyHadits() {
         if (indoEl) indoEl.textContent = data.id || '';
         if (refEl) refEl.textContent = `HR. Bukhari No. ${data.number || '-'}`;
     } catch (error) {
-        // Fallback lokal jika API Hadis gagal/slow
         const arabEl = document.getElementById('daily-hadits-arabic');
         const indoEl = document.getElementById('daily-hadits-translation');
         const refEl = document.getElementById('daily-hadits-ref');
@@ -74,7 +126,46 @@ export async function getDailyHadits() {
     }
 }
 
-// Helper untuk update UI Sholat
+// 8. Ambil Daftar Doa (Disediakan dua nama ekspor agar kompatibel dengan app.js)
+export async function fetchDoaListAPI() {
+    try {
+        const response = await fetch('https://equran.id/api/doa');
+        const data = await response.json();
+        return Array.isArray(data) ? data : (data.data || []);
+    } catch (error) {
+        console.error("Gagal memuat daftar doa:", error);
+        return [];
+    }
+}
+
+export async function fetchDoaList() {
+    const container = document.getElementById('doa-list-container');
+    const data = await fetchDoaListAPI();
+
+    if (!container) return data;
+
+    if (data.length > 0) {
+        container.innerHTML = '';
+        data.slice(0, 15).forEach((doa, index) => {
+            const item = document.createElement('div');
+            item.className = 'p-4 bg-white rounded-2xl border border-slate-100 shadow-sm space-y-2';
+            item.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-bold flex items-center justify-center">${index + 1}</span>
+                    <h4 class="text-xs font-semibold text-slate-700">${doa.nama || doa.title || 'Doa'}</h4>
+                </div>
+                <p class="font-arabic text-right text-lg leading-loose text-slate-800 my-2">${doa.ar || doa.arabic || ''}</p>
+                <p class="text-xs text-slate-500 italic">${doa.idn || doa.latin || doa.translation || ''}</p>
+            `;
+            container.appendChild(item);
+        });
+    } else {
+        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Gagal memuat daftar doa.</p>';
+    }
+    return data;
+}
+
+// Helper Internal
 function updatePrayerUI(jadwal) {
     if (!jadwal) return;
     const subuh = document.getElementById('time-subuh');
@@ -88,37 +179,4 @@ function updatePrayerUI(jadwal) {
     if (ashar) ashar.textContent = jadwal.ashar;
     if (maghrib) maghrib.textContent = jadwal.maghrib;
     if (isya) isya.textContent = jadwal.isya;
-}
-
-// Tambahkan di bagian bawah js/api.js
-
-export async function fetchDoaList() {
-    const container = document.getElementById('doa-list-container');
-    if (!container) return;
-
-    try {
-        // Menggunakan API Doa Terbuka (Equran / Islamic API)
-        const response = await fetch('https://equran.id/api/doa');
-        const data = await response.json();
-
-        container.innerHTML = '';
-        const list = Array.isArray(data) ? data : (data.data || []);
-
-        list.slice(0, 15).forEach((doa, index) => {
-            const item = document.createElement('div');
-            item.className = 'p-4 bg-white rounded-2xl border border-slate-100 shadow-sm space-y-2';
-            item.innerHTML = `
-                <div class="flex justify-between items-center">
-                    <span class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-bold flex items-center justify-center">${index + 1}</span>
-                    <h4 class="text-xs font-semibold text-slate-700">${doa.nama || doa.title || 'Doa'}</h4>
-                </div>
-                <p class="font-arabic text-right text-lg leading-loose text-slate-800 my-2">${doa.ar || doa.arabic || ''}</p>
-                <p class="text-xs text-slate-500 italic">${doa.idn || doa.latin || doa.translation || ''}</p>
-            `;
-            container.appendChild(item);
-        });
-    } catch (error) {
-        console.error("Gagal memuat daftar doa:", error);
-        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Gagal memuat daftar doa.</p>';
-    }
 }
