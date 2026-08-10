@@ -89,3 +89,36 @@ function updatePrayerUI(jadwal) {
     if (maghrib) maghrib.textContent = jadwal.maghrib;
     if (isya) isya.textContent = jadwal.isya;
 }
+
+// Tambahkan di bagian bawah js/api.js
+
+export async function fetchDoaList() {
+    const container = document.getElementById('doa-list-container');
+    if (!container) return;
+
+    try {
+        // Menggunakan API Doa Terbuka (Equran / Islamic API)
+        const response = await fetch('https://equran.id/api/doa');
+        const data = await response.json();
+
+        container.innerHTML = '';
+        const list = Array.isArray(data) ? data : (data.data || []);
+
+        list.slice(0, 15).forEach((doa, index) => {
+            const item = document.createElement('div');
+            item.className = 'p-4 bg-white rounded-2xl border border-slate-100 shadow-sm space-y-2';
+            item.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-bold flex items-center justify-center">${index + 1}</span>
+                    <h4 class="text-xs font-semibold text-slate-700">${doa.nama || doa.title || 'Doa'}</h4>
+                </div>
+                <p class="font-arabic text-right text-lg leading-loose text-slate-800 my-2">${doa.ar || doa.arabic || ''}</p>
+                <p class="text-xs text-slate-500 italic">${doa.idn || doa.latin || doa.translation || ''}</p>
+            `;
+            container.appendChild(item);
+        });
+    } catch (error) {
+        console.error("Gagal memuat daftar doa:", error);
+        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Gagal memuat daftar doa.</p>';
+    }
+}
