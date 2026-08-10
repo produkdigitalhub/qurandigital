@@ -1,12 +1,12 @@
 import { initializeUIComponents, showToast } from './ui.js';
-// Ubah fetchDailyAyat -> getDailyAyat & fetchDailyHadith -> getDailyHadits
+// Gunakan getDailyAyat & getDailyHadits sesuai nama fungsi di api.js
 import { fetchPrayerTimes, getDailyAyat, getDailyHadits } from './api.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Muat seluruh komponen HTML UI terlebih dahulu
+    // 1. Muat komponen HTML UI terlebih dahulu
     await initializeUIComponents();
 
-    // 2. Eksekusi pemanggilan API
+    // 2. Panggil API setelah elemen DOM komponen selesai dirender
     try {
         showToast("Memuat data...");
         await Promise.all([
