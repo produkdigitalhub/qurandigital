@@ -17,6 +17,38 @@ import {
 
 import { loadTelegramFeed, openTelegramModal } from './telegramfeed.js';
 
+// Fungsi pembantu aman untuk memanggil async function tanpa menggagalkan fungsi lain
+async function safeExec(fn, name) {
+    try {
+        await fn();
+    } catch (err) {
+        console.warn(`[Warning] Gagal memuat modul ${name}:`, err);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+});
+
+async function initApp() {
+    setHijriDate();
+    initEventListeners();
+    startTimer();
+
+    // 1. Muat Jadwal Sholat Terlebih Dahulu
+    await safeExec(() => loadPrayerSchedule(state.cityId), 'Jadwal Sholat');
+
+    // 2. Jalankan pemanggilan data mandiri (Jika 1 gagal, yang lain tetap jalan)
+    Promise.allSettled([
+        safeExec(() => loadDailyAyat(), 'Ayat Harian'),
+        safeExec(() => loadDailyHadits(), 'Hadits Harian'),
+        safeExec(() => loadSurahList(), 'Daftar Surah'),
+        safeExec(() => renderHaditsFeed('bukhari'), 'Feed Hadits'),
+        safeExec(() => loadAllDoa(), 'Daftar Doa'),
+        safeExec(() => loadTelegramFeed(), 'Telegram Feed')
+    ]);
+}
+
 // Inisialisasi Utama Aplikasi 
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
