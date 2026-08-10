@@ -90,7 +90,7 @@ function switchTab(tabName, filterParam = null) {
 
 // 1. DATA DOA
 async function loadAllDoa() {
-    const apiDoa = await fetchDoaListAPI();
+    const apiDoa = await fetchDoaList();
     if (apiDoa && apiDoa.length > 0) {
         state.doaList = apiDoa;
         renderDoaListUI(state.doaList);
