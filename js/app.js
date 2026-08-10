@@ -1,12 +1,14 @@
 import { initializeUIComponents, showToast } from './ui.js';
-// Gunakan getDailyAyat & getDailyHadits sesuai nama fungsi di api.js
 import { fetchPrayerTimes, getDailyAyat, getDailyHadits } from './api.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Muat komponen HTML UI terlebih dahulu
     await initializeUIComponents();
 
-    // 2. Panggil API setelah elemen DOM komponen selesai dirender
+    // 2. Aktifkan navigasi tombol bawah
+    setupNavigation();
+
+    // 3. Panggil API setelah elemen DOM komponen selesai dirender
     try {
         showToast("Memuat data...");
         await Promise.all([
@@ -28,14 +30,18 @@ function setupNavigation() {
     navButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const target = btn.id.replace('nav-', '');
+            
+            // Sembunyikan semua view
             views.forEach(v => {
                 const viewEl = document.getElementById(`view-${v}`);
                 if (viewEl) viewEl.classList.add('hidden');
             });
 
+            // Tampilkan view yang dipilih
             const activeView = document.getElementById(`view-${target}`);
             if (activeView) activeView.classList.remove('hidden');
 
+            // Update status tombol aktif
             navButtons.forEach(b => b.classList.remove('active-tab'));
             btn.classList.add('active-tab');
         });
