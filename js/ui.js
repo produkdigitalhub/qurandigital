@@ -54,3 +54,34 @@ export function showToast(message, duration = 3000) {
         toast.classList.add('opacity-0', 'pointer-events-none');
     }, duration);
 }
+
+// Tambahkan di bagian bawah ui.js
+
+export function renderDoaListUI(doaList) {
+    const container = document.getElementById('doa-list-container');
+    if (!container) return;
+
+    if (!doaList || doaList.length === 0) {
+        container.innerHTML = `
+            <div class="p-6 text-center text-xs text-slate-400">
+                Doa tidak ditemukan.
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = doaList.map(doa => `
+        <div class="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 space-y-3 hover:shadow-md transition">
+            <div class="flex items-start justify-between gap-2">
+                <h4 class="font-bold text-sm text-slate-800">${doa.judul || doa.doa || 'Doa'}</h4>
+                <span class="text-[10px] font-medium px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
+                    ${doa.kat || 'Harian'}
+                </span>
+            </div>
+            
+            ${doa.arab ? `<p class="text-right font-arabic text-xl leading-loose text-slate-800 pt-1">${doa.arab}</p>` : ''}
+            ${doa.latin ? `<p class="text-xs text-emerald-700 font-medium italic">${doa.latin}</p>` : ''}
+            ${doa.terjemah || doa.arti ? `<p class="text-xs text-slate-600 leading-relaxed">${doa.terjemah || doa.arti}</p>` : ''}
+        </div>
+    `).join('');
+}
