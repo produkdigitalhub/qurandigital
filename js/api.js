@@ -1,186 +1,91 @@
-// ==========================================
-// 1. AL-QURAN API (equran.id v2 - Valid Path)
-// ==========================================
+/**
+ * API Service Module
+ */
 
-export async function fetchSurahListAPI() {
+// 1. Ambil Jadwal Shalat
+export async function fetchPrayerTimes(cityId = '1301') { // Default Makassar/Jakarta
     try {
-        const res = await fetch('https://equran.id/api/v2/surat');
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        return data.data;
-    } catch (e) {
-        console.error("Gagal fetch daftar Surah:", e);
-        return [];
-    }
-}
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
 
-export async function fetchSurahDetailAPI(nomor) {
-    try {
-        const res = await fetch(`https://equran.id/api/v2/surat/${nomor}`);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        return data.data;
-    } catch (e) {
-        console.error(`Gagal fetch Surah No. ${nomor}:`, e);
-        return null;
-    }
-}
+        const response = await fetch(`https://api.myquran.com/v2/sholat/jadwal/${cityId}/${year}/${month}/${day}`);
+        const data = await response.json();
 
-// ==========================================
-// 2. JADWAL SHOLAT & KOTA (MyQuran API v2)
-// ==========================================
-
-export async function fetchPrayerScheduleAPI(cityId, yyyy, mm, dd) {
-    try {
-        const res = await fetch(`https://api.myquran.com/v2/sholat/jadwal/${cityId}/${yyyy}/${mm}/${dd}`);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return await res.json();
-    } catch (e) {
-        console.error("Gagal fetch Jadwal Sholat:", e);
-        return null;
-    }
-}
-
-export async function searchCityAPI(query) {
-    try {
-        const res = await fetch(`https://api.myquran.com/v2/sholat/kota/cari/${query}`);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return await res.json();
-    } catch (e) {
-        console.error("Gagal cari kota:", e);
-        return null;
-    }
-}
-
-// ==========================================
-// 3. HADITS API (Endpoint Hadith Vercel)
-// ==========================================
-
-export async function fetchHaditsBookAPI(bookName) {
-    try {
-        const res = await fetch(`https://hadis-api-id.vercel.app/hadith/${bookName}?page=1&limit=20`);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        
-        const result = await res.json();
-
-        if (result && result.items) {
-            return {
-                code: 200,
-                data: {
-                    hadiths: result.items.map(h => ({
-                        number: h.number,
-                        arab: h.arab,
-                        id: h.id
-                    }))
-                }
-            };
+        if (data.status && data.data) {
+            updatePrayerUI(data.data.jadwal);
         }
-        return null;
-    } catch (e) {
-        console.error("Gagal fetch Hadits:", e);
-        return null;
+    } catch (error) {
+        console.error("Gagal mengambil jadwal shalat:", error);
     }
 }
 
-// ==========================================
-// 4. DOA HARIAN API (EQuran.id)
-// ==========================================
-
-export async function fetchDoaListAPI() {
+// 2. Ambil Ayat Harian
+export async function getDailyAyat() {
     try {
-        const res = await fetch('https://equran.id/api/doa');
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        
-        const data = await res.json();
-        const listDoa = Array.isArray(data) ? data : (data.data || []);
+        // Random ayat antara 1-6236
+        const randomAyat = Math.floor(Math.random() * 6236) + 1;
+        const response = await fetch(`https://api.alquran.cloud/v1/ayah/${randomAyat}/editions/quran-uthmani,id.indonesian`);
+        const data = await response.json();
 
-        return listDoa.map((d, index) => ({
-            id: d.id || (index + 1),
-            judul: d.nama || d.judul || 'Tanpa Judul',
-            arab: d.ar || d.arab || '',
-            latin: d.tr || d.latin || '',
-            arti: d.idn || d.arti || d.terjemah || '',
-            kat: d.grup || d.kategori || 'Umum'
-        }));
-    } catch (e) {
-        console.error("Gagal fetch Doa dari EQuran.id:", e);
-        return [];
+        if (data.code === 200 && data.data.length >= 2) {
+            const arab = data.data[0].text;
+            const indo = data.data[1].text;
+            const surahName = data.data[0].surah.englishName;
+            const ayahNum = data.data[0].numberInSurah;
+
+            const arabEl = document.getElementById('daily-ayat-arabic');
+            const indoEl = document.getElementById('daily-ayat-translation');
+            const refEl = document.getElementById('daily-ayat-ref');
+
+            if (arabEl) arabEl.textContent = arab;
+            if (indoEl) indoEl.textContent = `"${indo}"`;
+            if (refEl) refEl.textContent = `QS. ${surahName}: ${ayahNum}`;
+        }
+    } catch (error) {
+        console.error("Gagal mengambil ayat harian:", error);
     }
 }
 
-// ==========================================
-// 5. HELPER FIQIH WAKTU SHALAT & SUNNAH
-// ==========================================
+// 3. Ambil Hadis Harian
+export async function getDailyHadits() {
+    try {
+        const response = await fetch('https://api.hadith.gq/hadith/bukhari/random');
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
 
-export function calculateFiqihTimes(jadwalObj) {
-    if (!jadwalObj || !jadwalObj.subuh || !jadwalObj.dzuhur) return null;
+        const arabEl = document.getElementById('daily-hadits-arabic');
+        const indoEl = document.getElementById('daily-hadits-translation');
+        const refEl = document.getElementById('daily-hadits-ref');
 
-    // A. Waktu Terbit / Syuruq & Estimasi Awal Dhuha (+15 menit)
-    const jamSyuruqStr = jadwalObj.terbit || jadwalObj.syuruq || "06:00";
-    const [sJam, sMenit] = jamSyuruqStr.split(':').map(Number);
-    
-    const timeSyuruq = new Date();
-    timeSyuruq.setHours(sJam, sMenit, 0);
+        if (arabEl) arabEl.textContent = data.arab || '';
+        if (indoEl) indoEl.textContent = data.id || '';
+        if (refEl) refEl.textContent = `HR. Bukhari No. ${data.number || '-'}`;
+    } catch (error) {
+        // Fallback lokal jika API Hadis gagal/slow
+        const arabEl = document.getElementById('daily-hadits-arabic');
+        const indoEl = document.getElementById('daily-hadits-translation');
+        const refEl = document.getElementById('daily-hadits-ref');
 
-    const timeDhuha = new Date(timeSyuruq.getTime() + 15 * 60000);
-
-    // B. Hitung 1/3 Malam Terakhir (Tahajud)
-    const [mJam, mMenit] = jadwalObj.maghrib.split(':').map(Number);
-    const [subJam, subMenit] = jadwalObj.subuh.split(':').map(Number);
-
-    let tMaghrib = new Date();
-    tMaghrib.setHours(mJam, mMenit, 0);
-
-    let tSubuh = new Date();
-    tSubuh.setDate(tSubuh.getDate() + 1);
-    tSubuh.setHours(subJam, subMenit, 0);
-
-    const totalMalamMs = tSubuh.getTime() - tMaghrib.getTime();
-    const sepertigaMalamMs = totalMalamMs / 3;
-    const timeTahajud = new Date(tSubuh.getTime() - sepertigaMalamMs);
-
-    // C. Status Waktu Haram Realtime
-    const sekarang = new Date();
-    let statusHaram = {
-        isHaram: false,
-        title: "Waktu Diperbolehkan Shalat",
-        desc: "Saat ini diperbolehkan mendirikan shalat sunnah mutlak.",
-        type: "safe"
-    };
-
-    if (sekarang >= timeSyuruq && sekarang < timeDhuha) {
-        statusHaram = {
-            isHaram: true,
-            title: "Waktu Haram Shalat (Syuruq)",
-            desc: "Matahari sedang terbit. Dilarang shalat sunnah mutlak hingga masuk waktu Dhuha.",
-            type: "danger"
-        };
-    } else {
-        const [dJam, dMenit] = jadwalObj.dzuhur.split(':').map(Number);
-        const timeDzuhur = new Date();
-        timeDzuhur.setHours(dJam, dMenit, 0);
-        const timeIstiwa = new Date(timeDzuhur.getTime() - 10 * 60000);
-
-        if (sekarang >= timeIstiwa && sekarang < timeDzuhur) {
-            statusHaram = {
-                isHaram: true,
-                title: "Waktu Haram Shalat (Istiwa)",
-                desc: "Matahari tepat di atas kepala. Dilarang shalat sunnah hingga azan Dzuhur berkumandang.",
-                type: "warning"
-            };
-        }
+        if (arabEl) arabEl.textContent = "Bawalah kejujuran, karena kejujuran menuntun kepada kebaikan.";
+        if (indoEl) indoEl.textContent = "Sesungguhnya kejujuran itu membimbing kepada kebaikan, dan kebaikan itu membimbing ke surga.";
+        if (refEl) refEl.textContent = "HR. Bukhari & Muslim";
     }
+}
 
-    const formatTime = (dateObj) => {
-        const h = String(dateObj.getHours()).padStart(2, '0');
-        const m = String(dateObj.getMinutes()).padStart(2, '0');
-        return `${h}:${m}`;
-    };
+// Helper untuk update UI Sholat
+function updatePrayerUI(jadwal) {
+    if (!jadwal) return;
+    const subuh = document.getElementById('time-subuh');
+    const dzuhur = document.getElementById('time-dzuhur');
+    const ashar = document.getElementById('time-ashar');
+    const maghrib = document.getElementById('time-maghrib');
+    const isya = document.getElementById('time-isya');
 
-    return {
-        syuruq: jamSyuruqStr,
-        dhuha: formatTime(timeDhuha),
-        tahajud: formatTime(timeTahajud),
-        statusHaram: statusHaram
-    };
+    if (subuh) subuh.textContent = jadwal.subuh;
+    if (dzuhur) dzuhur.textContent = jadwal.dzuhur;
+    if (ashar) ashar.textContent = jadwal.ashar;
+    if (maghrib) maghrib.textContent = jadwal.maghrib;
+    if (isya) isya.textContent = jadwal.isya;
 }
