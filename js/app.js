@@ -17,7 +17,7 @@ import {
 
 import { loadTelegramFeed, openTelegramModal } from './telegramfeed.js';
 
-// Fungsi pembantu aman untuk memanggil async function tanpa menggagalkan fungsi lain
+// Helper aman untuk memanggil fungsi async tanpa menghentikan modul lain
 async function safeExec(fn, name) {
     try {
         await fn();
@@ -26,6 +26,7 @@ async function safeExec(fn, name) {
     }
 }
 
+// Inisialisasi Utama Aplikasi (Hanya dipanggil SEKALI)
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
 });
@@ -33,13 +34,19 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initApp() {
     setHijriDate();
     initEventListeners();
+    
+    // Render cache awal jika ada
+    if (state.doaList && state.doaList.length > 0) {
+        renderDoaListUI(state.doaList); 
+    }
+    
     startTimer();
 
-    // 1. Muat Jadwal Sholat Terlebih Dahulu
+    // 1. Muat Jadwal Sholat Utama
     await safeExec(() => loadPrayerSchedule(state.cityId), 'Jadwal Sholat');
 
-    // 2. Jalankan pemanggilan data mandiri (Jika 1 gagal, yang lain tetap jalan)
-    Promise.allSettled([
+    // 2. Jalankan pemanggilan data mandiri (Jika 1 API error/gagal, yang lain tetap jalan)
+    await Promise.allSettled([
         safeExec(() => loadDailyAyat(), 'Ayat Harian'),
         safeExec(() => loadDailyHadits(), 'Hadits Harian'),
         safeExec(() => loadSurahList(), 'Daftar Surah'),
@@ -47,34 +54,6 @@ async function initApp() {
         safeExec(() => loadAllDoa(), 'Daftar Doa'),
         safeExec(() => loadTelegramFeed(), 'Telegram Feed')
     ]);
-}
-
-// Inisialisasi Utama Aplikasi 
-document.addEventListener('DOMContentLoaded', () => {
-    initApp();
-});
-
-async function initApp() {
-    setHijriDate();
-    initEventListeners();
-
-    // Render data awal jika ada di state
-    if (state.doaList && state.doaList.length > 0) {
-        renderDoaListUI(state.doaList); 
-    }
-    
-    startTimer();
-
-    // Jalankan pemanggilan data secara paralel
-    Promise.all([
-        loadPrayerSchedule(state.cityId),
-        loadDailyAyat(),
-        loadDailyHadits(),
-        loadSurahList(),
-        renderHaditsFeed('bukhari'),
-        loadAllDoa(),
-        loadTelegramFeed() // Memuat Feed Kajian Telegram ke Dashboard
-    ]).catch(err => console.error("Error loading initial data:", err));
 }
 
 function setHijriDate() {
@@ -231,7 +210,7 @@ async function loadDailyAyat() {
 
 async function loadDailyHadits() {
     const data = await fetchHaditsBookAPI('bukhari');
-    if (data && data.code === 200 && data.data && data.data.hadiths.length > 0) {
+    if (data && data.code === 200 && data.data && data.data.hadiths && data.data.hadiths.length > 0) {
         const h = data.data.hadiths[0];
         const arabEl = document.getElementById('daily-hadits-arabic');
         const transEl = document.getElementById('daily-hadits-translation');
@@ -243,8 +222,10 @@ async function loadDailyHadits() {
 
 async function loadSurahList() {
     const list = await fetchSurahListAPI();
-    state.surahList = list;
-    renderSurahListUI(list, openSurahModal);
+    if (list) {
+        state.surahList = list;
+        renderSurahListUI(list, openSurahModal);
+    }
 }
 
 async function openSurahModal(nomor) {
@@ -415,6 +396,7 @@ function initEventListeners() {
     });
 
     document.getElementById('btn-next-tasbih')?.addEventListener('click', () => {
+        if (!state.tasbihPhrases || state.tasbihPhrases.length === 0) return;
         state.tasbihIndex = (state.tasbihIndex + 1) % state.tasbihPhrases.length;
         const p = state.tasbihPhrases[state.tasbihIndex];
         
@@ -465,7 +447,6 @@ function initEventListeners() {
     initCompass();
 }
 
-// Menghitung Arah Kiblat
 function calculateQiblaBearing(lat, lng) {
     const kaabaLat = 21.422487 * (Math.PI / 180);
     const kaabaLng = 39.826206 * (Math.PI / 180);
@@ -482,7 +463,6 @@ function calculateQiblaBearing(lat, lng) {
     return (qibla + 360) % 360;
 }
 
-// Sensor Kompas
 function initCompass() {
     let userLat = -5.14766;
     let userLng = 119.43273;
