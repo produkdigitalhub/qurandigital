@@ -15,7 +15,15 @@ import {
     renderFullPrayerScheduleUI 
 } from './ui.js';
 
-import { loadTelegramFeed, openTelegramModal } from './telegramfeed.js';
+import { loadTelegramFeed } from './telegramfeed.js';
+function openTelegramModal(type) {
+    const modal = document.getElementById('telegram-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    } else {
+        showToast(`Fitur ${type} sedang disiapkan.`);
+    }
+}
 
 // Helper aman untuk memanggil fungsi async tanpa menghentikan modul lain
 async function safeExec(fn, name) {
