@@ -16,7 +16,7 @@ import {
     renderFullPrayerScheduleUI 
 } from './ui.js';
 
-import { initTelegramFeed, openTelegramModal } from './telegramfeed.js';
+import { initTelegramFeed, showTelegramContentInPage } from './telegramfeed.js';
 
 // Inisialisasi Utama Aplikasi 
 document.addEventListener('DOMContentLoaded', () => {
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initApp() {
     setHijriDate();
     initEventListeners();
-    
+     
     // Inisialisasi listener tombol Kajian & Nasihat Telegram Feed
     initTelegramFeed();
 
@@ -34,7 +34,7 @@ async function initApp() {
     if (state.doaList && state.doaList.length > 0) {
         renderDoaListUI(state.doaList); 
     }
-    
+     
     startTimer();
 
     // Jalankan pemanggilan data secara paralel
@@ -91,7 +91,7 @@ async function loadAllDoa() {
 
 function filterDoa(kat) {
     if (!state.doaList) return;
-    
+     
     if (kat === 'semua' || !kat) {
         renderDoaListUI(state.doaList);
     } else {
@@ -113,10 +113,10 @@ async function loadPrayerSchedule(cityId) {
     const data = await fetchPrayerScheduleAPI(cityId, yyyy, mm, dd);
     if (data && data.status) {
         state.prayerData = data.data;
-        
+         
         const headerCity = document.getElementById('header-city-name');
         if (headerCity) headerCity.innerText = data.data.lokasi.replace('KOTA ', '');
-        
+         
         const fullCity = document.getElementById('full-schedule-city');
         if (fullCity) fullCity.innerText = data.data.lokasi;
 
@@ -205,7 +205,6 @@ function updateNextPrayer(j) {
 function startTimer() {
     setInterval(() => {
         if (state.prayerData) {
-            // Update status fiqih setiap detik agar banner waktu haram berubah otomatis tepat waktu
             updateFiqihUI(state.prayerData.jadwal);
         }
 
@@ -218,7 +217,7 @@ function startTimer() {
         const hrs = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, '0');
         const mins = String(Math.floor((diff / (1000 * 60)) % 60)).padStart(2, '0');
         const secs = String(Math.floor((diff / 1000) % 60)).padStart(2, '0');
-        
+         
         const timerEl = document.getElementById('prayer-countdown');
         if (timerEl) timerEl.innerText = `${hrs}:${mins}:${secs}`;
     }, 1000);
@@ -404,9 +403,15 @@ function initEventListeners() {
     document.getElementById('btn-more-hadits')?.addEventListener('click', () => switchTab('hadits'));
     document.getElementById('btn-menu-kiblat')?.addEventListener('click', () => showToast("Arah Kiblat Indonesia ~294° N-W."));
 
-    // Tombol Kajian & Nasihat
-    document.getElementById('btn-menu-kajian')?.addEventListener('click', () => openTelegramModal('kajian'));
-    document.getElementById('btn-menu-nasihat')?.addEventListener('click', () => openTelegramModal('nasihat'));
+    // Tombol Kajian & Nasihat (Diubah menggunakan fungsi in-page langsung)
+    document.getElementById('btn-menu-kajian')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showTelegramContentInPage('kajian');
+    });
+    document.getElementById('btn-menu-nasihat')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showTelegramContentInPage('nasihat');
+    });
 
     // Tasbih Modal
     const openTasbih = () => document.getElementById('tasbih-modal')?.classList.remove('hidden');
@@ -431,7 +436,7 @@ function initEventListeners() {
     document.getElementById('btn-next-tasbih')?.addEventListener('click', () => {
         state.tasbihIndex = (state.tasbihIndex + 1) % state.tasbihPhrases.length;
         const p = state.tasbihPhrases[state.tasbihIndex];
-        
+         
         const phraseEl = document.getElementById('tasbih-phrase');
         const latinEl = document.getElementById('tasbih-latin');
         const countEl = document.getElementById('tasbih-count');
@@ -483,15 +488,15 @@ function initEventListeners() {
 function calculateQiblaBearing(lat, lng) {
     const kaabaLat = 21.422487 * (Math.PI / 180);
     const kaabaLng = 39.826206 * (Math.PI / 180);
-    
+     
     const myLat = lat * (Math.PI / 180);
     const myLng = lng * (Math.PI / 180);
-    
+     
     const dLng = kaabaLng - myLng;
-    
+     
     const y = Math.sin(dLng);
     const x = Math.cos(myLat) * Math.tan(kaabaLat) - Math.sin(myLat) * Math.cos(dLng);
-    
+     
     let qibla = Math.atan2(y, x) * (180 / Math.PI);
     return (qibla + 360) % 360;
 }
@@ -507,7 +512,7 @@ function initCompass() {
             userLat = pos.coords.latitude;
             userLng = pos.coords.longitude;
             qiblaBearing = calculateQiblaBearing(userLat, userLng);
-            
+             
             const degInfo = document.getElementById('kiblat-degree-info');
             if (degInfo) degInfo.innerText = `Arah Kiblat: ~${Math.round(qiblaBearing)}° N-W`;
         });
