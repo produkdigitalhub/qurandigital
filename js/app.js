@@ -1625,6 +1625,7 @@ async function openSurahModal(
                     `
                 )
                 .join('');
+        container.scrollTop = 0;
 
 
         // ------------------------------------------------------
