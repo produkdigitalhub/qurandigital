@@ -2218,427 +2218,65 @@ function initEventListeners() {
     // MENU QURAN
     // ========================================================
 
-    document
-        .getElementById(
-            'btn-menu-quran'
-        )
-        ?.addEventListener(
-            'click',
-            e => {
+  // ========================================================
+// QUICK MENU - EVENT DELEGATION
+// Aman untuk HTML yang dimuat secara dinamis
+// ========================================================
 
-                e.preventDefault();
+document.addEventListener('click', function (e) {
 
-                console.log(
-                    '[MENU] Al-Quran diklik'
-                );
+    const btn = e.target.closest('[id^="btn-menu-"]');
 
-                switchTab(
-                    'quran'
-                );
+    if (!btn) return;
 
-            }
-        );
+    console.log('[MENU] Klik:', btn.id);
 
+    switch (btn.id) {
 
-    // ========================================================
-    // MENU DOA
-    // ========================================================
+        case 'btn-menu-quran':
+            switchTab('quran');
+            break;
 
-    document
-        .getElementById(
-            'btn-menu-doa'
-        )
-        ?.addEventListener(
-            'click',
-            e => {
+        case 'btn-menu-doa':
+            switchTab('doa');
+            break;
 
-                e.preventDefault();
+        case 'btn-menu-hadits':
+            switchTab('hadits');
+            break;
 
-                switchTab(
-                    'doa'
-                );
+        case 'btn-menu-sholat':
+            switchTab('sholat');
+            break;
 
-            }
-        );
+        case 'btn-menu-pagi':
+            switchTab('doa', 'pagi');
+            break;
 
+        case 'btn-menu-petang':
+            switchTab('doa', 'petang');
+            break;
 
-    // ========================================================
-    // MENU HADIS
-    // ========================================================
+        case 'btn-menu-kiblat':
+            showToast('Arah Kiblat Indonesia ~294° N-W.');
+            break;
 
-    document
-        .getElementById(
-            'btn-menu-hadits'
-        )
-        ?.addEventListener(
-            'click',
-            e => {
+        case 'btn-menu-kajian':
+            openTelegramModal('kajian');
+            break;
 
-                e.preventDefault();
+        case 'btn-menu-nasihat':
+            openTelegramModal('nasihat');
+            break;
 
-                switchTab(
-                    'hadits'
-                );
-
-            }
-        );
-
-
-    // ========================================================
-    // MENU SHOLAT
-    // ========================================================
-
-    document
-        .getElementById(
-            'btn-menu-sholat'
-        )
-        ?.addEventListener(
-            'click',
-            e => {
-
-                e.preventDefault();
-
-                switchTab(
-                    'sholat'
-                );
-
-            }
-        );
-
-
-    // ========================================================
-    // PAGI
-    // ========================================================
-
-    document
-        .getElementById(
-            'btn-menu-pagi'
-        )
-        ?.addEventListener(
-            'click',
-            () =>
-                switchTab(
-                    'doa',
-                    'pagi'
-                )
-        );
-
-
-    // ========================================================
-    // PETANG
-    // ========================================================
-
-    document
-        .getElementById(
-            'btn-menu-petang'
-        )
-        ?.addEventListener(
-            'click',
-            () =>
-                switchTab(
-                    'doa',
-                    'petang'
-                )
-        );
-
-
-    // ========================================================
-    // MORE HADIS
-    // ========================================================
-
-    document
-        .getElementById(
-            'btn-more-hadits'
-        )
-        ?.addEventListener(
-            'click',
-            () =>
-                switchTab(
-                    'hadits'
-                )
-        );
-
-
-    // ========================================================
-    // KIBLAT
-    // ========================================================
-
-    document
-        .getElementById(
-            'btn-menu-kiblat'
-        )
-        ?.addEventListener(
-            'click',
-            () =>
-                showToast(
-                    'Arah Kiblat Indonesia ~294° N-W.'
-                )
-        );
-
-
-    // ========================================================
-    // KAJIAN
-    // ========================================================
-
-    document
-        .getElementById(
-            'btn-menu-kajian'
-        )
-        ?.addEventListener(
-            'click',
-            e => {
-
-                e.preventDefault();
-
-                openTelegramModal(
-                    'kajian'
-                );
-
-            }
-        );
-
-
-    // ========================================================
-    // NASIHAT
-    // ========================================================
-
-    document
-        .getElementById(
-            'btn-menu-nasihat'
-        )
-        ?.addEventListener(
-            'click',
-            e => {
-
-                e.preventDefault();
-
-                openTelegramModal(
-                    'nasihat'
-                );
-
-            }
-        );
-
-
-    // ========================================================
-    // TASBIH
-    // ========================================================
-
-    const openTasbih =
-        () =>
+        case 'btn-menu-tasbih':
             document
-                .getElementById(
-                    'tasbih-modal'
-                )
-                ?.classList.remove(
-                    'hidden'
-                );
-
-
-    const closeTasbih =
-        () =>
-            document
-                .getElementById(
-                    'tasbih-modal'
-                )
-                ?.classList.add(
-                    'hidden'
-                );
-
-
-    document
-        .getElementById(
-            'btn-menu-tasbih'
-        )
-        ?.addEventListener(
-            'click',
-            openTasbih
-        );
-
-
-    document
-        .getElementById(
-            'nav-float-tasbih'
-        )
-        ?.addEventListener(
-            'click',
-            openTasbih
-        );
-
-
-    document
-        .getElementById(
-            'btn-close-tasbih-modal'
-        )
-        ?.addEventListener(
-            'click',
-            closeTasbih
-        );
-
-
-    // ========================================================
-    // TASBIH COUNT
-    // ========================================================
-
-    document
-        .getElementById(
-            'btn-count-tasbih'
-        )
-        ?.addEventListener(
-            'click',
-            () => {
-
-                state.tasbihCount++;
-
-
-                const el =
-                    document.getElementById(
-                        'tasbih-count'
-                    );
-
-
-                if (el) {
-
-                    el.innerText =
-                        state.tasbihCount;
-
-                }
-
-
-                if (
-                    state.tasbihCount %
-                    33 ===
-                    0
-                ) {
-
-                    showToast(
-                        '33 Hitungan Tercapai!'
-                    );
-
-                }
-
-            }
-        );
-
-
-    // ========================================================
-    // RESET TASBIH
-    // ========================================================
-
-    document
-        .getElementById(
-            'btn-reset-tasbih'
-        )
-        ?.addEventListener(
-            'click',
-            () => {
-
-                state.tasbihCount =
-                    0;
-
-
-                const el =
-                    document.getElementById(
-                        'tasbih-count'
-                    );
-
-
-                if (el) {
-
-                    el.innerText =
-                        '0';
-
-                }
-
-            }
-        );
-
-
-    // ========================================================
-    // NEXT TASBIH
-    // ========================================================
-
-    document
-        .getElementById(
-            'btn-next-tasbih'
-        )
-        ?.addEventListener(
-            'click',
-            () => {
-
-                if (
-                    !state.tasbihPhrases ||
-                    !state.tasbihPhrases.length
-                ) {
-
-                    return;
-
-                }
-
-
-                state.tasbihIndex =
-                    (
-                        state.tasbihIndex +
-                        1
-                    ) %
-                    state.tasbihPhrases.length;
-
-
-                const p =
-                    state.tasbihPhrases[
-                        state.tasbihIndex
-                    ];
-
-
-                const phraseEl =
-                    document.getElementById(
-                        'tasbih-phrase'
-                    );
-
-
-                const latinEl =
-                    document.getElementById(
-                        'tasbih-latin'
-                    );
-
-
-                const countEl =
-                    document.getElementById(
-                        'tasbih-count'
-                    );
-
-
-                if (phraseEl) {
-
-                    phraseEl.innerText =
-                        p.arab ||
-                        '';
-
-                }
-
-
-                if (latinEl) {
-
-                    latinEl.innerText =
-                        p.latin ||
-                        '';
-
-                }
-
-
-                state.tasbihCount =
-                    0;
-
-
-                if (countEl) {
-
-                    countEl.innerText =
-                        '0';
-
-                }
-
-            }
-        );
+                .getElementById('tasbih-modal')
+                ?.classList.remove('hidden');
+            break;
+    }
+
+});
 
 
     // ========================================================
