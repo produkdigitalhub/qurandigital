@@ -1,79 +1,50 @@
 import { state } from './config.js';
-
-// 1. IMPORT DARI api.js (Hanya API Data)
 import { 
     fetchSurahListAPI, 
     fetchSurahDetailAPI, 
     fetchPrayerScheduleAPI, 
     searchCityAPI, 
     fetchHaditsBookAPI,
-    fetchDoaList
+    fetchDoaListAPI,
+    calculateFiqihTimes 
 } from './api.js';
-
-// 2. IMPORT DARI ui.js (Komponen & Render Tampilan)
 import { 
-    initializeUIComponents,
     showToast, 
     renderSurahListUI, 
     renderDoaListUI, 
     renderPrayerGridUI, 
     renderFullPrayerScheduleUI 
-} from './ui.js?v=1.1';
+} from './ui.js';
 
-// 3. IMPORT DARI telegramfeed.js
-import { loadTelegramFeed } from './telegramfeed.js';
+import { initTelegramFeed, openTelegramModal } from './telegramfeed.js';
 
-function openTelegramModal(type) {
-    const modal = document.getElementById('telegram-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-    } else {
-        showToast(`Fitur ${type} sedang disiapkan.`);
-    }
-}
-
-// Helper aman untuk memanggil fungsi async tanpa menghentikan modul lain
-async function safeExec(fn, name) {
-    try {
-        await fn();
-    } catch (err) {
-        console.warn(`[Warning] Gagal memuat modul ${name}:`, err);
-    }
-}
-
-// Inisialisasi Utama Aplikasi (Injeksi Komponen HTML Dulu)
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        await initializeUIComponents(); // Muat file HTML komponen
-    } catch (err) {
-        console.error("Gagal memuat komponen UI HTML:", err);
-    }
-    
-    initApp(); // Jalankan logika app setelah HTML siap
+// Inisialisasi Utama Aplikasi 
+document.addEventListener('DOMContentLoaded', () => {
+    initApp();
 });
 
 async function initApp() {
     setHijriDate();
     initEventListeners();
     
-    // Render cache awal jika ada
+    // Inisialisasi listener tombol Kajian & Nasihat Telegram Feed
+    initTelegramFeed();
+
+    // Render data awal jika ada di state
     if (state.doaList && state.doaList.length > 0) {
         renderDoaListUI(state.doaList); 
     }
     
     startTimer();
 
-    // 1. Muat Jadwal Sholat Utama
-    await safeExec(() => loadPrayerSchedule(state.cityId), 'Jadwal Sholat');
-
-    // 2. Jalankan pemanggilan data mandiri
-    await Promise.allSettled([
-        safeExec(() => loadDailyAyat(), 'Ayat Harian'),
-        safeExec(() => loadDailyHadits(), 'Hadits Harian'),
-        safeExec(() => loadSurahList(), 'Daftar Surah'),
-        safeExec(() => renderHaditsFeed('bukhari'), 'Feed Hadits'),
-        safeExec(() => loadAllDoa(), 'Daftar Doa'),
-        safeExec(() => loadTelegramFeed(), 'Telegram Feed')
+    // Jalankan pemanggilan data secara paralel
+    Promise.all([
+        loadPrayerSchedule(state.cityId),
+        loadDailyAyat(),
+        loadDailyHadits(),
+        loadSurahList(),
+        renderHaditsFeed('bukhari'),
+        loadAllDoa()
     ]);
 }
 
@@ -111,7 +82,7 @@ function switchTab(tabName, filterParam = null) {
 
 // 1. DATA DOA
 async function loadAllDoa() {
-    const apiDoa = await fetchDoaList();
+    const apiDoa = await fetchDoaListAPI();
     if (apiDoa && apiDoa.length > 0) {
         state.doaList = apiDoa;
         renderDoaListUI(state.doaList);
@@ -125,7 +96,7 @@ function filterDoa(kat) {
         renderDoaListUI(state.doaList);
     } else {
         const filtered = state.doaList.filter(d => {
-            const itemKat = (d.kat || d.grup || d.tag || '').toLowerCase();
+            const itemKat = (d.kat || d.grup || '').toLowerCase();
             return itemKat.includes(kat.toLowerCase());
         });
         renderDoaListUI(filtered);
@@ -155,6 +126,45 @@ async function loadPrayerSchedule(cityId) {
         renderPrayerGridUI(data.data.jadwal);
         renderFullPrayerScheduleUI(data.data.jadwal);
         updateNextPrayer(data.data.jadwal);
+
+        // Update Waktu Fiqih Sunnah & Haram
+        updateFiqihUI(data.data.jadwal);
+    }
+}
+
+function updateFiqihUI(jadwal) {
+    const fiqihData = calculateFiqihTimes(jadwal);
+    if (!fiqihData) return;
+
+    // 1. Update Waktu Syuruq & Dhuha
+    const elSyuruq = document.getElementById('time-syuruq');
+    const elDhuha = document.getElementById('status-dhuha');
+    if (elSyuruq) elSyuruq.innerText = fiqihData.syuruq;
+    if (elDhuha) elDhuha.innerText = `Awal Dhuha: ~${fiqihData.dhuha}`;
+
+    // 2. Update Waktu Tahajud
+    const elTahajud = document.getElementById('time-tahajud');
+    if (elTahajud) elTahajud.innerText = fiqihData.tahajud;
+
+    // 3. Update Status Waktu Haram Shalat
+    const container = document.getElementById('status-haram-container');
+    const title = document.getElementById('status-haram-title');
+    const desc = document.getElementById('status-haram-desc');
+
+    if (container && title && desc) {
+        title.innerText = fiqihData.statusHaram.title;
+        desc.innerText = fiqihData.statusHaram.desc;
+
+        if (fiqihData.statusHaram.type === 'danger') {
+            container.className = "bg-rose-950/40 border border-rose-500/30 rounded-2xl p-3 flex items-center gap-3";
+            title.className = "text-[11px] font-bold text-rose-300";
+        } else if (fiqihData.statusHaram.type === 'warning') {
+            container.className = "bg-amber-950/40 border border-amber-500/30 rounded-2xl p-3 flex items-center gap-3";
+            title.className = "text-[11px] font-bold text-amber-300";
+        } else {
+            container.className = "bg-emerald-950/40 border border-emerald-500/20 rounded-2xl p-3 flex items-center gap-3";
+            title.className = "text-[11px] font-bold text-emerald-300";
+        }
     }
 }
 
@@ -170,7 +180,6 @@ function updateNextPrayer(j) {
     let next = null;
 
     for (let t of times) {
-        if (!t.time) continue;
         const [h, m] = t.time.split(':');
         const pTime = new Date();
         pTime.setHours(parseInt(h), parseInt(m), 0);
@@ -195,6 +204,11 @@ function updateNextPrayer(j) {
 
 function startTimer() {
     setInterval(() => {
+        if (state.prayerData) {
+            // Update status fiqih setiap detik agar banner waktu haram berubah otomatis tepat waktu
+            updateFiqihUI(state.prayerData.jadwal);
+        }
+
         if (!state.nextPrayerTime) return;
         const diff = state.nextPrayerTime - new Date();
         if (diff <= 0) {
@@ -231,7 +245,7 @@ async function loadDailyAyat() {
 
 async function loadDailyHadits() {
     const data = await fetchHaditsBookAPI('bukhari');
-    if (data && data.code === 200 && data.data && data.data.hadiths && data.data.hadiths.length > 0) {
+    if (data && data.code === 200 && data.data.hadiths.length > 0) {
         const h = data.data.hadiths[0];
         const arabEl = document.getElementById('daily-hadits-arabic');
         const transEl = document.getElementById('daily-hadits-translation');
@@ -243,10 +257,8 @@ async function loadDailyHadits() {
 
 async function loadSurahList() {
     const list = await fetchSurahListAPI();
-    if (list) {
-        state.surahList = list;
-        renderSurahListUI(list, openSurahModal);
-    }
+    state.surahList = list;
+    renderSurahListUI(list, openSurahModal);
 }
 
 async function openSurahModal(nomor) {
@@ -307,112 +319,8 @@ async function renderHaditsFeed(bookName) {
     }
 }
 
-// 4. EVENT LISTENERS UTAMA (EVENT DELEGATION)
+// 4. EVENT LISTENERS
 function initEventListeners() {
-    // A. Terpusat untuk semua aksi Klik
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('button, .city-item, .nav-item');
-        if (!btn) return;
-
-        const id = btn.id;
-
-        // Navigasi Menu Utama Dashboard & Bottom Nav
-        if (id === 'btn-menu-quran' || id === 'nav-quran') switchTab('quran');
-        else if (id === 'btn-menu-doa' || id === 'nav-doa') switchTab('doa');
-        else if (id === 'btn-menu-hadits' || id === 'nav-hadits' || id === 'btn-more-hadits') switchTab('hadits');
-        else if (id === 'btn-menu-sholat' || id === 'btn-header-city') switchTab('sholat');
-        else if (id === 'nav-dashboard') switchTab('dashboard');
-        
-        // Quick Filter Doa (Dzikir Pagi / Petang)
-        else if (id === 'btn-menu-pagi') switchTab('doa', 'pagi');
-        else if (id === 'btn-menu-petang') switchTab('doa', 'petang');
-        
-        // Modal Kajian & Nasihat (Telegram)
-        else if (id === 'btn-menu-kajian') openTelegramModal('kajian');
-        else if (id === 'btn-menu-nasihat') openTelegramModal('nasihat');
-        
-        // Modal Tasbih
-        else if (id === 'btn-menu-tasbih' || id === 'nav-float-tasbih') {
-            document.getElementById('tasbih-modal')?.classList.remove('hidden');
-        }
-        else if (id === 'btn-close-tasbih-modal') {
-            document.getElementById('tasbih-modal')?.classList.add('hidden');
-        }
-        
-        // Kiblat
-        else if (id === 'btn-menu-kiblat') {
-            showToast("Arah Kiblat Indonesia ~294° N-W.");
-        }
-
-        // Surah Modal Close
-        else if (id === 'btn-close-surah-modal') {
-            document.getElementById('surah-modal')?.classList.add('hidden');
-        }
-
-        // Daily Ayat Audio
-        else if (id === 'daily-audio-btn') {
-            if (state.dailyAyatAudio) { 
-                new Audio(state.dailyAyatAudio).play(); 
-                showToast("Memutar audio..."); 
-            }
-        }
-
-        // Tasbih Controls
-        else if (id === 'btn-count-tasbih') {
-            state.tasbihCount++;
-            const el = document.getElementById('tasbih-count');
-            if (el) el.innerText = state.tasbihCount;
-            if (state.tasbihCount % 33 === 0) showToast("33 Hitungan Tercapai!");
-        }
-        else if (id === 'btn-reset-tasbih') {
-            state.tasbihCount = 0;
-            const el = document.getElementById('tasbih-count');
-            if (el) el.innerText = '0';
-        }
-        else if (id === 'btn-next-tasbih') {
-            if (!state.tasbihPhrases || state.tasbihPhrases.length === 0) return;
-            state.tasbihIndex = (state.tasbihIndex + 1) % state.tasbihPhrases.length;
-            const p = state.tasbihPhrases[state.tasbihIndex];
-            
-            const phraseEl = document.getElementById('tasbih-phrase');
-            const latinEl = document.getElementById('tasbih-latin');
-            const countEl = document.getElementById('tasbih-count');
-
-            if (phraseEl) phraseEl.innerText = p.arab;
-            if (latinEl) latinEl.innerText = p.latin;
-            state.tasbihCount = 0;
-            if (countEl) countEl.innerText = '0';
-        }
-
-        // Pilihan Kitab Hadis
-        else if (btn.closest('#hadits-books-grid')) {
-            const bookName = btn.dataset.book;
-            if (bookName) {
-                document.querySelectorAll('#hadits-books-grid button').forEach(b => {
-                    b.classList.remove('border-2', 'border-emerald-500');
-                    b.classList.add('border', 'border-slate-200');
-                });
-                btn.classList.remove('border-slate-200');
-                btn.classList.add('border-2', 'border-emerald-500');
-                renderHaditsFeed(bookName);
-            }
-        }
-
-        // Filter Chips Doa
-        else if (btn.closest('#doa-category-chips')) {
-            document.querySelectorAll('#doa-category-chips button').forEach(b => {
-                b.classList.remove('bg-emerald-600', 'text-white', 'shadow-sm');
-                b.classList.add('bg-white', 'border', 'border-slate-200', 'text-slate-600');
-            });
-            btn.classList.remove('bg-white', 'border', 'border-slate-200', 'text-slate-600');
-            btn.classList.add('bg-emerald-600', 'text-white', 'shadow-sm');
-
-            const kat = btn.dataset.cat;
-            filterDoa(kat);
-        }
-    });
-
-    // B. Pencarian Global Input Listener
     const globalSearchInput = document.getElementById('global-search-input');
     if (globalSearchInput) {
         globalSearchInput.addEventListener('input', (e) => {
@@ -437,44 +345,141 @@ function initEventListeners() {
                 renderDoaListUI(filteredDoa);
             }
 
+            const haditsCards = document.querySelectorAll('#hadits-feed-container > div');
+            haditsCards.forEach(card => {
+                const text = card.innerText.toLowerCase();
+                card.classList.toggle('hidden', !text.includes(query));
+            });
+
             if (query.length > 0 && state.activeTab === 'dashboard') {
                 switchTab('quran');
             }
         });
     }
 
-    // C. Pencarian Kota
-    const btnSearchCity = document.getElementById('btn-search-city');
-    if (btnSearchCity) {
-        btnSearchCity.addEventListener('click', async () => {
-            const input = document.getElementById('city-search-input');
-            if (!input) return;
-            const q = input.value.trim();
-            if (!q) return;
-            const res = await searchCityAPI(q);
-            const container = document.getElementById('city-search-results');
-            if (res && res.status && res.data.length > 0 && container) {
-                container.innerHTML = res.data.map(c => `
-                    <div class="city-item p-2 hover:bg-emerald-50 rounded-lg cursor-pointer flex justify-between items-center" data-id="${c.id}">
-                        <span>${c.lokasi}</span><i class="fa-solid fa-chevron-right text-[10px]"></i>
-                    </div>
-                `).join('');
-
-                container.querySelectorAll('.city-item').forEach(el => {
-                    el.addEventListener('click', () => {
-                        loadPrayerSchedule(el.dataset.id);
-                        container.innerHTML = '';
-                        showToast("Lokasi diubah!");
-                    });
-                });
-            }
+    // Pilihan Kitab Hadis
+    document.querySelectorAll('#hadits-books-grid button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const bookName = e.currentTarget.dataset.book;
+            document.querySelectorAll('#hadits-books-grid button').forEach(b => {
+                b.classList.remove('border-2', 'border-emerald-500');
+                b.classList.add('border', 'border-slate-200');
+            });
+            e.currentTarget.classList.remove('border-slate-200');
+            e.currentTarget.classList.add('border-2', 'border-emerald-500');
+            renderHaditsFeed(bookName);
         });
-    }
+    });
 
-    // D. Inisialisasi Kompas Kiblat
+    // Filter Chips Doa
+    document.querySelectorAll('#doa-category-chips button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('#doa-category-chips button').forEach(b => {
+                b.classList.remove('bg-emerald-600', 'text-white', 'shadow-sm');
+                b.classList.add('bg-white', 'border', 'border-slate-200', 'text-slate-600');
+            });
+            const target = e.currentTarget;
+            target.classList.remove('bg-white', 'border', 'border-slate-200', 'text-slate-600');
+            target.classList.add('bg-emerald-600', 'text-white', 'shadow-sm');
+
+            const kat = target.dataset.cat;
+            filterDoa(kat);
+        });
+    });
+
+    // Navigasi Bottom Bar
+    document.getElementById('nav-dashboard')?.addEventListener('click', () => switchTab('dashboard'));
+    document.getElementById('nav-quran')?.addEventListener('click', () => switchTab('quran'));
+    document.getElementById('nav-doa')?.addEventListener('click', () => switchTab('doa'));
+    document.getElementById('nav-hadits')?.addEventListener('click', () => switchTab('hadits'));
+    document.getElementById('btn-header-city')?.addEventListener('click', () => switchTab('sholat'));
+
+    // Quick Menu Dashboard
+    document.getElementById('btn-menu-quran')?.addEventListener('click', () => switchTab('quran'));
+    document.getElementById('btn-menu-doa')?.addEventListener('click', () => switchTab('doa'));
+    document.getElementById('btn-menu-hadits')?.addEventListener('click', () => switchTab('hadits'));
+    document.getElementById('btn-menu-sholat')?.addEventListener('click', () => switchTab('sholat'));
+    document.getElementById('btn-menu-pagi')?.addEventListener('click', () => switchTab('doa', 'pagi'));
+    document.getElementById('btn-menu-petang')?.addEventListener('click', () => switchTab('doa', 'petang'));
+    document.getElementById('btn-more-hadits')?.addEventListener('click', () => switchTab('hadits'));
+    document.getElementById('btn-menu-kiblat')?.addEventListener('click', () => showToast("Arah Kiblat Indonesia ~294° N-W."));
+
+    // Tombol Kajian & Nasihat
+    document.getElementById('btn-menu-kajian')?.addEventListener('click', () => openTelegramModal('kajian'));
+    document.getElementById('btn-menu-nasihat')?.addEventListener('click', () => openTelegramModal('nasihat'));
+
+    // Tasbih Modal
+    const openTasbih = () => document.getElementById('tasbih-modal')?.classList.remove('hidden');
+    const closeTasbih = () => document.getElementById('tasbih-modal')?.classList.add('hidden');
+    document.getElementById('btn-menu-tasbih')?.addEventListener('click', openTasbih);
+    document.getElementById('nav-float-tasbih')?.addEventListener('click', openTasbih);
+    document.getElementById('btn-close-tasbih-modal')?.addEventListener('click', closeTasbih);
+
+    document.getElementById('btn-count-tasbih')?.addEventListener('click', () => {
+        state.tasbihCount++;
+        const el = document.getElementById('tasbih-count');
+        if (el) el.innerText = state.tasbihCount;
+        if (state.tasbihCount % 33 === 0) showToast("33 Hitungan Tercapai!");
+    });
+
+    document.getElementById('btn-reset-tasbih')?.addEventListener('click', () => {
+        state.tasbihCount = 0;
+        const el = document.getElementById('tasbih-count');
+        if (el) el.innerText = '0';
+    });
+
+    document.getElementById('btn-next-tasbih')?.addEventListener('click', () => {
+        state.tasbihIndex = (state.tasbihIndex + 1) % state.tasbihPhrases.length;
+        const p = state.tasbihPhrases[state.tasbihIndex];
+        
+        const phraseEl = document.getElementById('tasbih-phrase');
+        const latinEl = document.getElementById('tasbih-latin');
+        const countEl = document.getElementById('tasbih-count');
+
+        if (phraseEl) phraseEl.innerText = p.arab;
+        if (latinEl) latinEl.innerText = p.latin;
+        state.tasbihCount = 0;
+        if (countEl) countEl.innerText = '0';
+    });
+
+    // Copy & Audio
+    document.getElementById('daily-audio-btn')?.addEventListener('click', () => {
+        if (state.dailyAyatAudio) { new Audio(state.dailyAyatAudio).play(); showToast("Memutar audio..."); }
+    });
+
+    document.getElementById('btn-close-surah-modal')?.addEventListener('click', () => {
+        document.getElementById('surah-modal')?.classList.add('hidden');
+    });
+
+    // Pencarian Kota
+    document.getElementById('btn-search-city')?.addEventListener('click', async () => {
+        const input = document.getElementById('city-search-input');
+        if (!input) return;
+        const q = input.value.trim();
+        if (!q) return;
+        const res = await searchCityAPI(q);
+        const container = document.getElementById('city-search-results');
+        if (res && res.status && res.data.length > 0 && container) {
+            container.innerHTML = res.data.map(c => `
+                <div class="city-item p-2 hover:bg-emerald-50 rounded-lg cursor-pointer flex justify-between items-center" data-id="${c.id}">
+                    <span>${c.lokasi}</span><i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </div>
+            `).join('');
+
+            container.querySelectorAll('.city-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    loadPrayerSchedule(el.dataset.id);
+                    container.innerHTML = '';
+                    showToast("Lokasi diubah!");
+                });
+            });
+        }
+    });
+
     initCompass();
 }
 
+// Menghitung Arah Kiblat
 function calculateQiblaBearing(lat, lng) {
     const kaabaLat = 21.422487 * (Math.PI / 180);
     const kaabaLng = 39.826206 * (Math.PI / 180);
@@ -491,6 +496,7 @@ function calculateQiblaBearing(lat, lng) {
     return (qibla + 360) % 360;
 }
 
+// Sensor Kompas
 function initCompass() {
     let userLat = -5.14766;
     let userLng = 119.43273;
