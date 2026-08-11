@@ -198,3 +198,58 @@ function updatePrayerUI(jadwal) {
     if (maghrib) maghrib.textContent = jadwal.maghrib;
     if (isya) isya.textContent = jadwal.isya;
 }
+
+export function calculateFiqihTimes(jadwal) {
+    if (!jadwal || !jadwal.subuh || !jadwal.maghrib) return null;
+
+    const timeToDate = (timeStr) => {
+        if (!timeStr) return new Date();
+        const [h, m] = timeStr.split(':').map(Number);
+        const d = new Date();
+        d.setHours(h || 0, m || 0, 0, 0);
+        return d;
+    };
+
+    const subuh = timeToDate(jadwal.subuh);
+    const syuruq = timeToDate(jadwal.terbit || jadwal.syuruq || "06:00"); 
+    const dzuhur = timeToDate(jadwal.dzuhur);
+    const maghrib = timeToDate(jadwal.maghrib);
+
+    // Estimasi Waktu Dhuha (20 menit setelah Syuruq)
+    const dhuha = new Date(syuruq.getTime() + 20 * 60000);
+
+    // Estimasi Waktu Tahajud (1,5 jam sebelum Subuh)
+    const tahajud = new Date(subuh.getTime() - 90 * 60000);
+
+    const formatTime = (date) => {
+        return String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+    };
+
+    const now = new Date();
+    let statusHaram = { 
+        title: "Waktu Dibolehkan Sholat", 
+        desc: "Tidak ada larangan sholat mutlak saat ini.", 
+        type: "safe" 
+    };
+
+    if (now >= syuruq && now <= new Date(syuruq.getTime() + 15 * 60000)) {
+        statusHaram = { 
+            title: "Waktu Haram Sholat", 
+            desc: "Saat matahari sedang terbit.", 
+            type: "danger" 
+        };
+    } else if (now >= new Date(dzuhur.getTime() - 10 * 60000) && now <= dzuhur) {
+        statusHaram = { 
+            title: "Waktu Makruh Sholat", 
+            desc: "Tepat saat matahari di atas kepala (Zawal).", 
+            type: "warning" 
+        };
+    }
+
+    return {
+        syuruq: formatTime(syuruq),
+        dhuha: formatTime(dhuha),
+        tahajud: formatTime(tahajud),
+        statusHaram: statusHaram
+    };
+}
