@@ -3127,3 +3127,23 @@ window.quranApp = {
 console.log(
     '[QURAN DIGITAL] app.js berhasil dimuat'
 );
+
+// ============================================================
+// PUBLIC API - UNTUK CONSOLE / DEBUG
+// ============================================================
+
+window.quranApp = {
+    switchTab,
+    loadSurahList,
+    openSurahModal,
+    loadDailyAyat,
+    loadDailyHadits,
+    renderHaditsFeed,
+    loadAllDoa,
+    filterDoa,
+    loadPrayerSchedule
+};
+
+window.switchTab = switchTab;
+
+console.log('[QURAN DIGITAL] quranApp siap');
