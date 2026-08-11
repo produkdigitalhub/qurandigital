@@ -1,3 +1,4 @@
+console.log('=== APP.JS BERHASIL DIMUAT ===');
 import { state } from './config.js';
 
 import {
@@ -3147,3 +3148,5 @@ window.quranApp = {
 window.switchTab = switchTab;
 
 console.log('[QURAN DIGITAL] quranApp siap');
+
+
