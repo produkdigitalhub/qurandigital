@@ -418,7 +418,12 @@ function setHijriDate() {
 // NAVIGASI UTAMA
 // ============================================================
 
+// ============================================================
+// NAVIGASI UTAMA
+// ============================================================
+
 function switchTab(tabName) {
+
     console.log('[NAV] switchTab:', tabName);
 
     const views = {
@@ -429,33 +434,56 @@ function switchTab(tabName) {
         sholat: 'view-sholat'
     };
 
-    // Sembunyikan SEMUA view
+    // ========================================================
+    // SEMBUNYIKAN SEMUA VIEW
+    // ========================================================
+
     Object.values(views).forEach(id => {
+
         const el = document.getElementById(id);
 
         if (!el) {
-            console.warn('[NAV] View tidak ditemukan:', id);
+            console.warn(
+                '[NAV] View tidak ditemukan:',
+                id
+            );
             return;
         }
 
         el.classList.add('hidden');
 
-        // Reset display secara eksplisit
         el.style.display = 'none';
         el.style.visibility = 'hidden';
         el.style.opacity = '0';
     });
 
-    // Ambil view tujuan
-    const targetId = views[tabName] || views.dashboard;
-    const target = document.getElementById(targetId);
+
+    // ========================================================
+    // VIEW TARGET
+    // ========================================================
+
+    const targetId =
+        views[tabName] || views.dashboard;
+
+    const target =
+        document.getElementById(targetId);
+
 
     if (!target) {
-        console.error('[NAV] Target view tidak ditemukan:', targetId);
+
+        console.error(
+            '[NAV] Target view tidak ditemukan:',
+            targetId
+        );
+
         return;
     }
 
-    // Tampilkan view tujuan
+
+    // ========================================================
+    // TAMPILKAN VIEW
+    // ========================================================
+
     target.classList.remove('hidden');
 
     target.style.display = 'block';
@@ -463,108 +491,9 @@ function switchTab(tabName) {
     target.style.opacity = '1';
     target.style.width = '100%';
 
-    // Update tombol navigasi
-    document.querySelectorAll('.nav-item').forEach(btn => {
-        btn.classList.remove('active-tab');
-    });
-
-    const navButton = document.getElementById(`nav-${tabName}`);
-
-    if (navButton) {
-        navButton.classList.add('active-tab');
-    }
-
-    // Update state
-    if (typeof state !== 'undefined') {
-        state.activeTab = tabName;
-    }
-
-    console.log(
-        '[NAV] View aktif:',
-        targetId,
-        target.getBoundingClientRect()
-    );
-
-    // Scroll kembali ke atas
-    const main = document.getElementById('main-content');
-
-    if (main) {
-        main.scrollTop = 0;
-    }
-}
 
     // ========================================================
-    // SEMBUNYIKAN SEMUA VIEW
-    // ========================================================
-
-    views.forEach(
-        viewName => {
-
-            const elements =
-                document.querySelectorAll(
-                    `#view-${viewName}`
-                );
-
-
-            elements.forEach(
-                view => {
-
-                    view.classList.add(
-                        'hidden'
-                    );
-
-                    view.style.display =
-                        'none';
-
-                }
-            );
-
-        }
-    );
-
-
-    // ========================================================
-    // TAMPILKAN VIEW AKTIF
-    // ========================================================
-
-    const activeViews =
-        document.querySelectorAll(
-            `#view-${tabName}`
-        );
-
-
-    if (!activeViews.length) {
-
-        console.error(
-            `[NAVIGASI] view-${tabName} tidak ditemukan`
-        );
-
-        return;
-
-    }
-
-
-    activeViews.forEach(
-        view => {
-
-            view.classList.remove(
-                'hidden'
-            );
-
-            view.style.display =
-                '';
-
-        }
-    );
-
-
-    console.log(
-        `[NAVIGASI] view-${tabName} berhasil ditampilkan`
-    );
-
-
-    // ========================================================
-    // BOTTOM NAVIGATION
+    // UPDATE NAVIGATION
     // ========================================================
 
     document
@@ -575,31 +504,55 @@ function switchTab(tabName) {
                 'active-tab'
             );
 
-            btn.classList.add(
-                'text-slate-400'
-            );
-
         });
 
 
-    const activeBtn =
+    const navButton =
         document.getElementById(
             `nav-${tabName}`
         );
 
 
-    if (activeBtn) {
+    if (navButton) {
 
-        activeBtn.classList.add(
+        navButton.classList.add(
             'active-tab'
-        );
-
-        activeBtn.classList.remove(
-            'text-slate-400'
         );
 
     }
 
+
+    // ========================================================
+    // UPDATE STATE
+    // ========================================================
+
+    state.activeTab =
+        tabName;
+
+
+    console.log(
+        '[NAV] View aktif:',
+        targetId,
+        target.getBoundingClientRect()
+    );
+
+
+    // ========================================================
+    // SCROLL KE ATAS
+    // ========================================================
+
+    const main =
+        document.getElementById(
+            'main-content'
+        );
+
+
+    if (main) {
+
+        main.scrollTop = 0;
+
+    }
+}
 
     // ========================================================
     // FILTER DOA
