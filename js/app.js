@@ -185,85 +185,85 @@ export async function initializeUIComponents() {
         // Header
         [
             'header-container',
-            './components/header.html'
+            '../components/header.html'
         ],
 
         // Dashboard
         [
             'card-next-prayer',
-            './components/dashboard/next-prayer.html'
+            '../components/dashboard/next-prayer.html'
         ],
 
         [
             'card-jurnal',
-            './components/dashboard/mutabaah-jurnal.html'
+            '../components/dashboard/mutabaah-jurnal.html'
         ],
 
         [
             'card-quick-menu',
-            './components/dashboard/quick-menu.html'
+            '../components/dashboard/quick-menu.html'
         ],
 
         [
             'card-daily-ayat',
-            './components/dashboard/daily-ayat.html'
+            '../components/dashboard/daily-ayat.html'
         ],
 
         [
             'card-daily-hadits',
-            './components/dashboard/daily-hadits.html'
+            '../components/dashboard/daily-hadits.html'
         ],
 
         [
             'card-telegram-feed',
-            './components/dashboard/telegram-feed.html'
+            '../components/dashboard/telegram-feed.html'
         ],
 
         // Views
         [
             'view-quran',
-            './components/view/quran-view.html'
+            '../components/view/quran-view.html'
         ],
 
         [
             'view-doa',
-            './components/view/doa-view.html'
+            '../components/view/doa-view.html'
         ],
 
         [
             'view-hadits',
-            './components/view/hadits-view.html'
+            '../components/view/hadits-view.html'
         ],
 
         [
             'view-sholat',
-            './components/view/sholat-view.html'
+            '../components/view/sholat-view.html'
         ],
 
         // Modals
         [
             'modal-surah-container',
-            './components/modals/surah-modal.html'
+            '../components/modals/surah-modal.html'
         ],
 
         [
             'modal-tasbih-container',
-            './components/modals/tasbih-modal.html'
+            '../components/modals/tasbih-modal.html'
         ],
 
         [
             'modal-kiblat-container',
-            './components/modals/kiblat-modal.html'
+            '../components/modals/kiblat-modal.html'
         ],
 
         [
             'modal-share-container',
-            './components/modals/share-modal.html'
+            '../components/modals/share-modal.html'
         ],
 
         [
             'modal-telegram-container',
-            './components/modals/telegram-modal.html'
+            '../components/modals/telegram-modal.html'
         ]
     ];
 
