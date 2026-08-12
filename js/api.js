@@ -53,6 +53,39 @@ export async function searchCityAPI(query) {
 }
 
 // ==========================================
+// DAFTAR SEMUA KOTA
+// ==========================================
+
+export async function fetchAllCitiesAPI() {
+
+    try {
+
+        const res = await fetch(
+            'https://api.myquran.com/v2/sholat/kota/semua'
+        );
+
+        if (!res.ok) {
+            throw new Error(
+                `HTTP error! status: ${res.status}`
+            );
+        }
+
+        const data = await res.json();
+
+        return data.data || [];
+
+    } catch (e) {
+
+        console.error(
+            'Gagal fetch daftar kota:',
+            e
+        );
+
+        return [];
+    }
+}
+
+// ==========================================
 // 3. HADITS API (Endpoint Hadith Vercel)
 // ==========================================
 
