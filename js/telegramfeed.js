@@ -295,11 +295,6 @@ export async function openTelegramModal(type = 'kajian') {
     }
 }
 
-// Compatibility wrapper used by app.js for the Dashboard menu.
-export async function showTelegramContentInPage(type = 'kajian') {
-    return openTelegramModal(type);
-}
-
 // Inisialisasi Feed
 export function initTelegramFeed() {
     const btnClose = document.getElementById('btn-close-kn-modal');
