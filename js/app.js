@@ -6,7 +6,6 @@ import {
     searchCityAPI, 
     fetchHaditsBookAPI,
     fetchDoaListAPI,
-    initLocation,
     calculateFiqihTimes 
 } from './api.js';
 import { 
