@@ -17,6 +17,7 @@ import {
 } from './ui.js';
 
 import { initTelegramFeed, openTelegramModal } from './telegramfeed.js';
+import { initLocation } from './location.js';
 
 // Inisialisasi Utama Aplikasi 
 document.addEventListener('DOMContentLoaded', () => {
