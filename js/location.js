@@ -1,40 +1,35 @@
-// =====================================================
-// NURISLAM LOCATION & HIJRI DATE
-// =====================================================
-
-const LOCATION_STORAGE_KEY = 'nurislam_location';
-
-let currentLocation = {
-    city: 'Makassar',
-    country: 'Indonesia',
-    latitude: -5.1477,
-    longitude: 119.4327
-};
+import { state } from './config.js';
+import {
+    searchCityAPI,
+    fetchAllCitiesAPI
+} from './api.js';
 
 
 // =====================================================
-// LOAD LOCATION
+// STORAGE
 // =====================================================
 
-function loadSavedLocation() {
+const LOCATION_KEY =
+    'nurislam_selected_location';
 
-    const saved = localStorage.getItem(LOCATION_STORAGE_KEY);
 
-    if (saved) {
+// =====================================================
+// UPDATE HEADER
+// =====================================================
 
-        try {
+export function updateHeaderLocation() {
 
-            currentLocation = JSON.parse(saved);
+    const element =
+        document.getElementById(
+            'header-city-name'
+        );
 
-        } catch (error) {
+    if (!element) return;
 
-            console.error('Location data rusak:', error);
-
-        }
-
-    }
-
-    updateLocationUI();
+    element.textContent =
+        state.cityName
+            .replace(/^Kota\s+/i, '')
+            .toUpperCase();
 }
 
 
@@ -42,307 +37,120 @@ function loadSavedLocation() {
 // SAVE LOCATION
 // =====================================================
 
-function saveLocation(location) {
+export function saveLocation(location) {
 
-    currentLocation = location;
+    state.cityId =
+        location.cityId;
+
+    state.cityName =
+        location.cityName;
+
+    state.latitude =
+        location.latitude || null;
+
+    state.longitude =
+        location.longitude || null;
+
+    state.locationSource =
+        location.source || 'manual';
+
 
     localStorage.setItem(
-        LOCATION_STORAGE_KEY,
-        JSON.stringify(location)
+        LOCATION_KEY,
+        JSON.stringify({
+
+            cityId: state.cityId,
+
+            cityName: state.cityName,
+
+            latitude: state.latitude,
+
+            longitude: state.longitude,
+
+            source: state.locationSource
+
+        })
     );
 
-    updateLocationUI();
 
-    loadPrayerTimes();
+    updateHeaderLocation();
 
-    loadHijriDate();
+
+    console.log(
+        '📍 Lokasi dipilih:',
+        state.cityName,
+        state.cityId
+    );
 }
 
 
 // =====================================================
-// UPDATE LOCATION UI
+// LOAD SAVED LOCATION
 // =====================================================
 
-function updateLocationUI() {
+export function loadSavedLocation() {
 
-    const el = document.getElementById('location-name');
+    const saved =
+        localStorage.getItem(
+            LOCATION_KEY
+        );
 
-    if (!el) return;
+    if (!saved) {
 
-    el.textContent =
-        currentLocation.city.toUpperCase();
-
-}
-
-
-// =====================================================
-// DETEKSI LOKASI OTOMATIS
-// =====================================================
-
-window.detectMyLocation = function () {
-
-    if (!navigator.geolocation) {
-
-        alert('Browser tidak mendukung GPS.');
+        updateHeaderLocation();
 
         return;
 
     }
 
-    navigator.geolocation.getCurrentPosition(
-
-        async function (position) {
-
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-
-            console.log('GPS:', lat, lon);
-
-            await reverseGeocode(lat, lon);
-
-        },
-
-        function (error) {
-
-            console.error(
-                'GPS Error:',
-                error
-            );
-
-            alert(
-                'Lokasi tidak dapat diperoleh. Silakan pilih kota secara manual.'
-            );
-
-        },
-
-        {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 300000
-        }
-
-    );
-
-};
-
-
-// =====================================================
-// REVERSE GEOCODING
-// =====================================================
-
-async function reverseGeocode(lat, lon) {
 
     try {
 
-        const url =
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
+        const location =
+            JSON.parse(saved);
 
-        const response = await fetch(url);
 
-        const data = await response.json();
+        state.cityId =
+            location.cityId;
 
-        const address = data.address || {};
+        state.cityName =
+            location.cityName;
 
-        const city =
-            address.city ||
-            address.town ||
-            address.municipality ||
-            address.county ||
-            address.state ||
-            'Lokasi Anda';
+        state.latitude =
+            location.latitude;
 
-        const country =
-            address.country ||
-            'Indonesia';
+        state.longitude =
+            location.longitude;
 
-        saveLocation({
+        state.locationSource =
+            location.source || 'manual';
 
-            city: city,
-
-            country: country,
-
-            latitude: lat,
-
-            longitude: lon
-
-        });
 
     } catch (error) {
 
         console.error(
-            'Reverse geocode error:',
+            'Gagal membaca lokasi:',
             error
         );
 
     }
 
+
+    updateHeaderLocation();
 }
 
 
 // =====================================================
-// HIJRI DATE
+// OPEN MODAL
 // =====================================================
 
-async function loadHijriDate() {
-
-    const el =
-        document.getElementById('hijri-date');
-
-    if (!el) return;
-
-    try {
-
-        const today =
-            new Date();
-
-        const day =
-            String(today.getDate()).padStart(2, '0');
-
-        const month =
-            String(today.getMonth() + 1).padStart(2, '0');
-
-        const year =
-            today.getFullYear();
-
-        const url =
-            `https://api.aladhan.com/v1/gToH?date=${day}-${month}-${year}`;
-
-        const response =
-            await fetch(url);
-
-        const result =
-            await response.json();
-
-        const hijri =
-            result.data.hijri;
-
-        el.textContent =
-            `${hijri.day} ${hijri.month.en} ${hijri.year} H`;
-
-    } catch (error) {
-
-        console.error(
-            'Hijri error:',
-            error
-        );
-
-        el.textContent =
-            'Tanggal Hijriah';
-
-    }
-
-}
-
-
-// =====================================================
-// PRAYER TIMES
-// =====================================================
-
-async function loadPrayerTimes() {
-
-    const lat =
-        currentLocation.latitude;
-
-    const lon =
-        currentLocation.longitude;
-
-    try {
-
-        const today =
-            new Date();
-
-        const day =
-            String(today.getDate()).padStart(2, '0');
-
-        const month =
-            String(today.getMonth() + 1).padStart(2, '0');
-
-        const year =
-            today.getFullYear();
-
-        const url =
-            `https://api.aladhan.com/v1/timings/${day}-${month}-${year}?latitude=${lat}&longitude=${lon}&method=20`;
-
-        const response =
-            await fetch(url);
-
-        const result =
-            await response.json();
-
-        if (!result.data) return;
-
-        const timings =
-            result.data.timings;
-
-        console.log(
-            'Prayer Times:',
-            timings
-        );
-
-        updatePrayerUI(timings);
-
-    } catch (error) {
-
-        console.error(
-            'Prayer API error:',
-            error
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// UPDATE PRAYER UI
-// =====================================================
-
-function updatePrayerUI(timings) {
-
-    const mapping = {
-
-        Fajr: 'fajr-time',
-
-        Dhuhr: 'dhuhr-time',
-
-        Asr: 'asr-time',
-
-        Maghrib: 'maghrib-time',
-
-        Isha: 'isha-time'
-
-    };
-
-
-    Object.entries(mapping).forEach(
-        ([prayer, id]) => {
-
-            const el =
-                document.getElementById(id);
-
-            if (el && timings[prayer]) {
-
-                el.textContent =
-                    timings[prayer];
-
-            }
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// LOCATION MODAL
-// =====================================================
-
-window.openLocationModal = function () {
+export function openLocationModal() {
 
     let modal =
         document.getElementById(
             'location-modal'
         );
+
 
     if (!modal) {
 
@@ -355,134 +163,18 @@ window.openLocationModal = function () {
 
     }
 
-    modal.classList.remove('hidden');
 
-};
-
-
-// =====================================================
-// CREATE LOCATION MODAL
-// =====================================================
-
-function createLocationModal() {
-
-    const modal =
-        document.createElement('div');
-
-    modal.id =
-        'location-modal';
-
-    modal.className =
-        'fixed inset-0 z-[999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4';
-
-    modal.innerHTML = `
-
-        <div class="bg-white rounded-3xl w-full max-w-md p-5 shadow-2xl">
-
-            <div class="flex justify-between items-center mb-4">
-
-                <h3 class="font-bold text-slate-800">
-                    Pilih Lokasi
-                </h3>
-
-                <button
-                    onclick="closeLocationModal()"
-                    class="w-8 h-8 rounded-full bg-slate-100">
-
-                    ✕
-
-                </button>
-
-            </div>
-
-
-            <button
-                onclick="detectMyLocation(); closeLocationModal();"
-                class="w-full p-3 rounded-xl bg-emerald-600 text-white font-semibold mb-4">
-
-                📍 Gunakan Lokasi Saya
-
-            </button>
-
-
-            <div class="text-xs text-slate-400 mb-2">
-                Pilih kota
-            </div>
-
-
-            <div class="grid grid-cols-2 gap-2">
-
-                <button onclick="selectCity('Makassar', 'Indonesia', -5.1477, 119.4327)"
-                    class="p-3 bg-slate-50 rounded-xl text-sm">
-                    Makassar
-                </button>
-
-                <button onclick="selectCity('Jakarta', 'Indonesia', -6.2088, 106.8456)"
-                    class="p-3 bg-slate-50 rounded-xl text-sm">
-                    Jakarta
-                </button>
-
-                <button onclick="selectCity('Surabaya', 'Indonesia', -7.2575, 112.7521)"
-                    class="p-3 bg-slate-50 rounded-xl text-sm">
-                    Surabaya
-                </button>
-
-                <button onclick="selectCity('Bandung', 'Indonesia', -6.9175, 107.6191)"
-                    class="p-3 bg-slate-50 rounded-xl text-sm">
-                    Bandung
-                </button>
-
-                <button onclick="selectCity('Medan', 'Indonesia', 3.5952, 98.6722)"
-                    class="p-3 bg-slate-50 rounded-xl text-sm">
-                    Medan
-                </button>
-
-                <button onclick="selectCity('Semarang', 'Indonesia', -6.9667, 110.4167)"
-                    class="p-3 bg-slate-50 rounded-xl text-sm">
-                    Semarang
-                </button>
-
-            </div>
-
-        </div>
-
-    `;
-
-    document.body.appendChild(modal);
-
+    modal.classList.remove(
+        'hidden'
+    );
 }
-
-
-// =====================================================
-// SELECT CITY
-// =====================================================
-
-window.selectCity = function (
-    city,
-    country,
-    latitude,
-    longitude
-) {
-
-    saveLocation({
-
-        city,
-        country,
-        latitude,
-        longitude
-
-    });
-
-    closeLocationModal();
-
-};
 
 
 // =====================================================
 // CLOSE MODAL
 // =====================================================
 
-window.closeLocationModal = function () {
+export function closeLocationModal() {
 
     const modal =
         document.getElementById(
@@ -491,26 +183,579 @@ window.closeLocationModal = function () {
 
     if (modal) {
 
-        modal.classList.add('hidden');
+        modal.classList.add(
+            'hidden'
+        );
 
     }
-
-};
+}
 
 
 // =====================================================
-// INIT
+// CREATE MODAL
 // =====================================================
 
-document.addEventListener(
-    'DOMContentLoaded',
-    function () {
+function createLocationModal() {
 
-        loadSavedLocation();
+    const modal =
+        document.createElement('div');
 
-        loadHijriDate();
 
-        loadPrayerTimes();
+    modal.id =
+        'location-modal';
+
+
+    modal.className =
+        'fixed inset-0 z-[999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4';
+
+
+    modal.innerHTML = `
+
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+
+
+            <!-- HEADER -->
+
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+
+                <div>
+
+                    <h3 class="font-bold text-slate-800">
+                        Pilih Lokasi
+                    </h3>
+
+                    <p class="text-[11px] text-slate-400">
+                        Jadwal shalat akan menyesuaikan kota
+                    </p>
+
+                </div>
+
+
+                <button
+                    id="close-location"
+                    class="w-8 h-8 rounded-full bg-slate-100">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <!-- BODY -->
+
+            <div class="p-5">
+
+
+                <!-- GPS -->
+
+                <button
+                    id="use-gps"
+                    class="w-full p-3 rounded-2xl bg-emerald-600 text-white flex items-center gap-3">
+
+                    <i class="fa-solid fa-location-crosshairs"></i>
+
+                    <div class="text-left">
+
+                        <div class="text-sm font-bold">
+                            Gunakan Lokasi Saya
+                        </div>
+
+                        <div class="text-[10px] text-emerald-100">
+                            Tentukan kota berdasarkan lokasi perangkat
+                        </div>
+
+                    </div>
+
+                </button>
+
+
+                <!-- SEARCH -->
+
+                <div class="relative mt-4">
+
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+
+                    <input
+                        id="city-search"
+                        type="text"
+                        placeholder="Cari kota..."
+                        class="w-full pl-9 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+
+                </div>
+
+
+                <div
+                    id="city-results"
+                    class="mt-3 max-h-64 overflow-y-auto space-y-1">
+
+                    <div class="text-center py-5 text-xs text-slate-400">
+                        Ketik nama kota...
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        modal
+    );
+
+
+    document
+        .getElementById(
+            'close-location'
+        )
+        .addEventListener(
+            'click',
+            closeLocationModal
+        );
+
+
+    document
+        .getElementById(
+            'city-search'
+        )
+        .addEventListener(
+            'input',
+            event => {
+
+                searchCities(
+                    event.target.value
+                );
+
+            }
+        );
+
+
+    document
+        .getElementById(
+            'use-gps'
+        )
+        .addEventListener(
+            'click',
+            detectLocation
+        );
+}
+
+
+// =====================================================
+// SEARCH CITY
+// =====================================================
+
+async function searchCities(
+    keyword
+) {
+
+    const results =
+        document.getElementById(
+            'city-results'
+        );
+
+
+    if (!results) return;
+
+
+    if (keyword.trim().length < 2) {
+
+        results.innerHTML = `
+
+            <div class="text-center py-5 text-xs text-slate-400">
+                Ketik minimal 2 huruf
+            </div>
+
+        `;
+
+        return;
 
     }
-);
+
+
+    results.innerHTML = `
+
+        <div class="text-center py-5 text-xs text-slate-400">
+
+            <i class="fa-solid fa-spinner fa-spin mr-1"></i>
+
+            Mencari kota...
+
+        </div>
+
+    `;
+
+
+    try {
+
+        const response =
+            await searchCityAPI(
+                encodeURIComponent(
+                    keyword.trim()
+                )
+            );
+
+
+        if (
+            !response ||
+            !response.data ||
+            !response.data.length
+        ) {
+
+            results.innerHTML = `
+
+                <div class="text-center py-5 text-xs text-slate-400">
+                    Kota tidak ditemukan
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        results.innerHTML =
+            response.data.map(city => `
+
+                <button
+                    class="city-option w-full flex items-center gap-3 p-3 rounded-xl hover:bg-emerald-50 text-left"
+                    data-id="${city.id}"
+                    data-name="${city.lokasi}">
+
+                    <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+
+                        <i class="fa-solid fa-location-dot text-xs"></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <div class="text-sm font-semibold text-slate-700">
+                            ${city.lokasi}
+                        </div>
+
+                        <div class="text-[10px] text-slate-400">
+                            ID Kota: ${city.id}
+                        </div>
+
+                    </div>
+
+                </button>
+
+            `).join('');
+
+
+        results
+            .querySelectorAll(
+                '.city-option'
+            )
+            .forEach(button => {
+
+                button.addEventListener(
+                    'click',
+                    () => {
+
+                        selectCity(
+                            button.dataset.id,
+                            button.dataset.name
+                        );
+
+                    }
+                );
+
+            });
+
+
+    } catch (error) {
+
+        console.error(
+            'Search city error:',
+            error
+        );
+
+        results.innerHTML = `
+
+            <div class="text-center py-5 text-xs text-rose-500">
+                Gagal mencari kota
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+// =====================================================
+// SELECT CITY
+// =====================================================
+
+function selectCity(
+    cityId,
+    cityName
+) {
+
+    saveLocation({
+
+        cityId:
+            cityId,
+
+        cityName:
+            cityName,
+
+        source:
+            'manual'
+
+    });
+
+
+    closeLocationModal();
+
+
+    // Beri tahu aplikasi
+    document.dispatchEvent(
+        new CustomEvent(
+            'nurislam-location-changed',
+            {
+                detail: {
+                    cityId,
+                    cityName
+                }
+            }
+        )
+    );
+}
+
+
+// =====================================================
+// GPS
+// =====================================================
+
+async function detectLocation() {
+
+    if (
+        !navigator.geolocation
+    ) {
+
+        alert(
+            'Browser tidak mendukung GPS.'
+        );
+
+        return;
+
+    }
+
+
+    navigator.geolocation.getCurrentPosition(
+
+        async position => {
+
+            const lat =
+                position.coords.latitude;
+
+            const lon =
+                position.coords.longitude;
+
+
+            console.log(
+                'GPS:',
+                lat,
+                lon
+            );
+
+
+            try {
+
+                // Reverse geocoding
+                const response =
+                    await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=10`
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                const address =
+                    data.address || {};
+
+
+                const cityName =
+                    address.city ||
+                    address.town ||
+                    address.municipality ||
+                    address.county ||
+                    address.state;
+
+
+                if (!cityName) {
+
+                    throw new Error(
+                        'Nama kota tidak ditemukan'
+                    );
+
+                }
+
+
+                // Cari City ID MyQuran
+                const search =
+                    await searchCityAPI(
+                        encodeURIComponent(
+                            cityName
+                        )
+                    );
+
+
+                let city = null;
+
+
+                if (
+                    search &&
+                    search.data &&
+                    search.data.length
+                ) {
+
+                    city =
+                        search.data[0];
+
+                }
+
+
+                if (!city) {
+
+                    alert(
+                        `Kota ${cityName} tidak ditemukan di MyQuran. Silakan pilih manual.`
+                    );
+
+                    return;
+
+                }
+
+
+                saveLocation({
+
+                    cityId:
+                        city.id,
+
+                    cityName:
+                        city.lokasi,
+
+                    latitude:
+                        lat,
+
+                    longitude:
+                        lon,
+
+                    source:
+                        'gps'
+
+                });
+
+
+                closeLocationModal();
+
+
+                document.dispatchEvent(
+                    new CustomEvent(
+                        'nurislam-location-changed',
+                        {
+                            detail: {
+                                cityId:
+                                    city.id,
+
+                                cityName:
+                                    city.lokasi
+                            }
+                        }
+                    )
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    'GPS location error:',
+                    error
+                );
+
+                alert(
+                    'Lokasi ditemukan, tetapi kota tidak dapat dipetakan.'
+                );
+
+            }
+
+        },
+
+
+        error => {
+
+            console.error(
+                'GPS error:',
+                error
+            );
+
+            alert(
+                'Silakan izinkan akses lokasi pada browser.'
+            );
+
+        },
+
+        {
+            enableHighAccuracy:
+                true,
+
+            timeout:
+                15000,
+
+            maximumAge:
+                300000
+        }
+
+    );
+
+}
+
+
+// =====================================================
+// INIT LOCATION BUTTON
+// =====================================================
+
+export function initLocation() {
+
+    loadSavedLocation();
+
+
+    const button =
+        document.getElementById(
+            'btn-header-city'
+        );
+
+
+    if (!button) {
+
+        console.warn(
+            'Tombol lokasi belum tersedia'
+        );
+
+        return;
+
+    }
+
+
+    button.addEventListener(
+        'click',
+        openLocationModal
+    );
+
+
+    console.log(
+        '✅ Sistem lokasi NurIslam aktif'
+    );
+}
