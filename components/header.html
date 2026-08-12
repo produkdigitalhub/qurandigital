@@ -1,26 +1,68 @@
 <header class="bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 text-white p-5 pb-6 rounded-b-[28px] shadow-lg relative z-10 flex-shrink-0">
+
     <div class="flex justify-between items-center mb-3">
+
+        <!-- LOGO + NAMA -->
         <div class="flex items-center space-x-2">
+
             <div class="w-9 h-9 rounded-full bg-emerald-600/50 border border-emerald-400/30 flex items-center justify-center text-amber-300 shadow-inner">
                 <i class="fa-solid fa-kaaba text-lg"></i>
             </div>
+
             <div>
+
                 <h1 class="font-bold text-lg leading-tight tracking-wide flex items-center gap-1.5">
-                    NurIslam <span class="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded-full font-medium">PRO</span>
+                    NurIslam
+
+                    <span class="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded-full font-medium">
+                        PRO
+                    </span>
                 </h1>
-                <p class="text-[11px] text-emerald-100/80" id="current-hijri-date">Loading Hijri...</p>
+
+                <!-- TANGGAL HIJRIAH DINAMIS -->
+                <p
+                    class="text-[11px] text-emerald-100/80"
+                    id="current-hijri-date">
+                    Memuat tanggal Hijriah...
+                </p>
+
             </div>
+
         </div>
-        <button id="btn-header-city" class="flex items-center space-x-1.5 bg-emerald-900/40 hover:bg-emerald-900/60 border border-emerald-500/30 px-3 py-1.5 rounded-full text-xs text-emerald-100 transition">
+
+
+        <!-- LOKASI -->
+        <button
+            id="btn-header-city"
+            onclick="openLocationModal()"
+            class="flex items-center space-x-1.5 bg-emerald-900/40 hover:bg-emerald-900/60 border border-emerald-500/30 px-3 py-1.5 rounded-full text-xs text-emerald-100 transition">
+
             <i class="fa-solid fa-location-dot text-amber-400"></i>
-            <span id="header-city-name" class="font-medium max-w-[90px] truncate">Makassar</span>
+
+            <span
+                id="header-city-name"
+                class="font-medium max-w-[90px] truncate">
+                Makassar
+            </span>
+
             <i class="fa-solid fa-chevron-down text-[10px] opacity-70"></i>
+
         </button>
+
     </div>
 
-    <!-- Search Bar -->
+
+    <!-- SEARCH BAR -->
     <div class="relative mt-2">
+
         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-        <input type="text" id="global-search-input" placeholder="Cari Surah, Doa, atau Hadis..." class="w-full pl-10 pr-4 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-xs text-white placeholder-emerald-100/60 focus:outline-none focus:ring-2 focus:ring-amber-400/60 transition">
+
+        <input
+            type="text"
+            id="global-search-input"
+            placeholder="Cari Surah, Doa, atau Hadis..."
+            class="w-full pl-10 pr-4 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-xs text-white placeholder-emerald-100/60 focus:outline-none focus:ring-2 focus:ring-amber-400/60 transition">
+
     </div>
+
 </header>
