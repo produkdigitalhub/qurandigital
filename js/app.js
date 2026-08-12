@@ -1,4 +1,3 @@
-console.log('=== APP.JS BERHASIL DIMUAT ===');
 import { state } from './config.js';
 
 import {
@@ -12,7 +11,6 @@ import {
 } from './api.js';
 
 import {
-    initializeUIComponents,
     showToast,
     renderSurahListUI,
     renderDoaListUI,
@@ -27,155 +25,430 @@ import {
 
 
 // ============================================================
-// INITIALIZATION
+// QURAN DIGITAL APP
 // ============================================================
 
-document.addEventListener('DOMContentLoaded', async () => {
-
-    console.log('[QURAN DIGITAL] DOMContentLoaded');
-
-    await initApp();
-
-});
+console.log('=== APP.JS BERHASIL DIMUAT ===');
 
 
 // ============================================================
-// INIT APP
+// COMPONENT LOADER
+// FIX GITHUB PAGES
 // ============================================================
 
-async function initApp() {
+export async function loadComponent(elementId, filepath) {
 
-    console.log('[QURAN DIGITAL] initApp()');
+    const container =
+        document.getElementById(elementId);
+
+    if (!container) {
+
+        console.warn(
+            `[UI] Container tidak ditemukan: ${elementId}`
+        );
+
+        return false;
+    }
 
     try {
 
-        // ------------------------------------------------------
-        // 1. Load semua komponen HTML terlebih dahulu
-        // ------------------------------------------------------
+        /*
+         * Gunakan lokasi app.js sebagai dasar path.
+         * Ini lebih aman untuk GitHub Pages.
+         */
+        const url =
+            new URL(
+                filepath,
+                import.meta.url
+            );
 
-        if (typeof initializeUIComponents === 'function') {
+        console.log(
+            `[UI] Memuat: ${url.href}`
+        );
 
-            console.log('[UI] Memuat komponen...');
+        const response =
+            await fetch(url.href, {
+                cache: 'no-cache'
+            });
 
-            await initializeUIComponents();
+        if (!response.ok) {
 
-            console.log('[UI] Semua komponen selesai dimuat');
+            throw new Error(
+                `HTTP ${response.status} - ${url.href}`
+            );
+        }
+
+        const html =
+            await response.text();
+
+        if (!html.trim()) {
+
+            throw new Error(
+                `File kosong: ${url.href}`
+            );
+        }
+
+
+        // ====================================================
+        // CEK ROOT COMPONENT
+        // Jika component mempunyai ID yang sama dengan
+        // container, jangan membuat ID ganda.
+        // ====================================================
+
+        const temp =
+            document.createElement('div');
+
+        temp.innerHTML = html.trim();
+
+        const firstElement =
+            temp.firstElementChild;
+
+
+        if (
+            firstElement &&
+            firstElement.id === elementId
+        ) {
+
+            /*
+             * Contoh:
+             *
+             * container:
+             * <div id="view-quran"></div>
+             *
+             * component:
+             * <div id="view-quran">...</div>
+             *
+             * Kita replace container langsung.
+             */
+
+            container.replaceWith(
+                firstElement
+            );
+
+            console.log(
+                `[UI] Component ${elementId} berhasil dimuat (root ID dipertahankan)`
+            );
 
         } else {
 
-            console.warn(
-                '[UI] initializeUIComponents tidak tersedia'
-            );
+            container.innerHTML =
+                html;
 
+            console.log(
+                `[UI] Component ${elementId} berhasil dimuat`
+            );
         }
 
-
-        // ------------------------------------------------------
-        // 2. Setup tanggal
-        // ------------------------------------------------------
-
-        setHijriDate();
-
-
-        // ------------------------------------------------------
-        // 3. Setup event
-        // ------------------------------------------------------
-
-        initEventListeners();
-
-
-        // ------------------------------------------------------
-        // 4. Dashboard pertama
-        // ------------------------------------------------------
-
-        switchTab('dashboard');
-
-
-        // ------------------------------------------------------
-        // 5. Telegram
-        // ------------------------------------------------------
-
-        try {
-
-            initTelegramFeed();
-
-        } catch (error) {
-
-            console.error(
-                '[TELEGRAM]',
-                error
-            );
-
-        }
-
-
-        // ------------------------------------------------------
-        // 6. Render doa dari state
-        // ------------------------------------------------------
-
-        if (
-            state.doaList &&
-            state.doaList.length > 0
-        ) {
-
-            renderDoaListUI(
-                state.doaList
-            );
-
-        }
-
-
-        // ------------------------------------------------------
-        // 7. Timer
-        // ------------------------------------------------------
-
-        startTimer();
-
-
-        // ------------------------------------------------------
-        // 8. Load semua data
-        // ------------------------------------------------------
-
-        console.log(
-            '[DATA] Mulai memuat data aplikasi...'
-        );
-
-        const results =
-            await Promise.allSettled([
-
-                loadPrayerSchedule(
-                    state.cityId
-                ),
-
-                loadDailyAyat(),
-
-                loadDailyHadits(),
-
-                loadSurahList(),
-
-                renderHaditsFeed(
-                    'bukhari'
-                ),
-
-                loadAllDoa()
-
-            ]);
-
-
-        console.log(
-            '[DATA] Loading selesai:',
-            results
-        );
-
+        return true;
 
     } catch (error) {
 
         console.error(
-            '[INIT APP ERROR]',
+            `[UI] Gagal memuat ${filepath}:`,
+            error
+        );
+
+        /*
+         * Jangan biarkan area kosong tanpa informasi
+         * ketika GitHub Pages mengalami 404.
+         */
+
+        container.innerHTML = `
+            <div class="p-6 text-center">
+                <div class="text-rose-500 text-sm font-semibold mb-2">
+                    Gagal memuat komponen
+                </div>
+
+                <div class="text-xs text-slate-400 break-all">
+                    ${filepath}
+                </div>
+            </div>
+        `;
+
+        return false;
+    }
+}
+
+
+// ============================================================
+// INITIALIZE UI COMPONENTS
+// ============================================================
+
+export async function initializeUIComponents() {
+
+    console.log(
+        '[UI] Mulai memuat semua component...'
+    );
+
+    const components = [
+
+        // Header
+        [
+            'header-container',
+            './components/header.html'
+        ],
+
+        // Dashboard
+        [
+            'card-next-prayer',
+            './components/dashboard/next-prayer.html'
+        ],
+
+        [
+            'card-jurnal',
+            './components/dashboard/mutabaah-jurnal.html'
+        ],
+
+        [
+            'card-quick-menu',
+            './components/dashboard/quick-menu.html'
+        ],
+
+        [
+            'card-daily-ayat',
+            './components/dashboard/daily-ayat.html'
+        ],
+
+        [
+            'card-daily-hadits',
+            './components/dashboard/daily-hadits.html'
+        ],
+
+        [
+            'card-telegram-feed',
+            './components/dashboard/telegram-feed.html'
+        ],
+
+        // Views
+        [
+            'view-quran',
+            './components/view/quran-view.html'
+        ],
+
+        [
+            'view-doa',
+            './components/view/doa-view.html'
+        ],
+
+        [
+            'view-hadits',
+            './components/view/hadits-view.html'
+        ],
+
+        [
+            'view-sholat',
+            './components/view/sholat-view.html'
+        ],
+
+        // Modals
+        [
+            'modal-surah-container',
+            './components/modals/surah-modal.html'
+        ],
+
+        [
+            'modal-tasbih-container',
+            './components/modals/tasbih-modal.html'
+        ],
+
+        [
+            'modal-kiblat-container',
+            './components/modals/kiblat-modal.html'
+        ],
+
+        [
+            'modal-share-container',
+            './components/modals/share-modal.html'
+        ],
+
+        [
+            'modal-telegram-container',
+            './components/modals/telegram-modal.html'
+        ]
+    ];
+
+
+    let berhasil = 0;
+    let gagal = 0;
+
+
+    for (const [elementId, filepath] of components) {
+
+        const result =
+            await loadComponent(
+                elementId,
+                filepath
+            );
+
+        if (result) {
+            berhasil++;
+        } else {
+            gagal++;
+        }
+    }
+
+
+    console.log(
+        `[UI] Semua component selesai dimuat. Berhasil: ${berhasil}, Gagal: ${gagal}`
+    );
+}
+
+
+// ============================================================
+// TOAST
+// ============================================================
+
+export function showAppToast(
+    message,
+    duration = 3000
+) {
+
+    const toast =
+        document.getElementById('toast');
+
+    if (!toast) return;
+
+    toast.textContent =
+        message;
+
+    toast.classList.remove(
+        'opacity-0',
+        'pointer-events-none'
+    );
+
+    toast.classList.add(
+        'opacity-100'
+    );
+
+
+    setTimeout(() => {
+
+        toast.classList.remove(
+            'opacity-100'
+        );
+
+        toast.classList.add(
+            'opacity-0',
+            'pointer-events-none'
+        );
+
+    }, duration);
+}
+
+
+// ============================================================
+// DOM READY
+// ============================================================
+
+document.addEventListener(
+    'DOMContentLoaded',
+    () => {
+
+        console.log(
+            '[QURAN DIGITAL] DOMContentLoaded'
+        );
+
+        initApp();
+
+    }
+);
+
+
+// ============================================================
+// INITIALIZE APP
+// ============================================================
+
+async function initApp() {
+
+    console.log(
+        '[QURAN DIGITAL] initApp()'
+    );
+
+
+    setHijriDate();
+
+
+    /*
+     * PENTING:
+     * Component harus selesai dimuat TERLEBIH DAHULU.
+     */
+    await initializeUIComponents();
+
+
+    /*
+     * Setelah HTML component tersedia,
+     * baru pasang event listener.
+     */
+    initEventListeners();
+
+
+    /*
+     * Dashboard pertama kali.
+     */
+    switchTab('dashboard');
+
+
+    // Telegram
+    try {
+
+        initTelegramFeed();
+
+    } catch (error) {
+
+        console.error(
+            '[TELEGRAM]',
             error
         );
 
     }
+
+
+    // Doa dari state
+    if (
+        state.doaList &&
+        state.doaList.length > 0
+    ) {
+
+        renderDoaListUI(
+            state.doaList
+        );
+
+    }
+
+
+    startTimer();
+
+
+    // ========================================================
+    // LOAD DATA
+    // ========================================================
+
+    Promise.allSettled([
+
+        loadPrayerSchedule(
+            state.cityId
+        ),
+
+        loadDailyAyat(),
+
+        loadDailyHadits(),
+
+        loadSurahList(),
+
+        renderHaditsFeed(
+            'bukhari'
+        ),
+
+        loadAllDoa()
+
+    ]).then(results => {
+
+        console.log(
+            '[QURAN DIGITAL] Data loading selesai',
+            results
+        );
+
+    });
 
 }
 
@@ -186,19 +459,27 @@ async function initApp() {
 
 function setHijriDate() {
 
-    const today = new Date();
+    const today =
+        new Date();
 
     const options = {
+
         weekday: 'long',
+
         year: 'numeric',
+
         month: 'long',
+
         day: 'numeric'
+
     };
+
 
     const el =
         document.getElementById(
             'current-hijri-date'
         );
+
 
     if (el) {
 
@@ -209,12 +490,11 @@ function setHijriDate() {
             )} • 1447 H`;
 
     }
-
 }
 
 
 // ============================================================
-// NAVIGASI
+// NAVIGASI UTAMA
 // ============================================================
 
 function switchTab(
@@ -233,52 +513,61 @@ function switchTab(
 
 
     const views = [
+
         'dashboard',
+
         'quran',
+
         'doa',
+
         'hadits',
+
         'sholat'
+
     ];
 
 
-    // ----------------------------------------------------------
-    // Hide semua view
-    // ----------------------------------------------------------
+    // ========================================================
+    // SEMBUNYIKAN SEMUA VIEW
+    // ========================================================
 
     views.forEach(
         viewName => {
 
-            const view =
-                document.getElementById(
-                    `view-${viewName}`
+            const elements =
+                document.querySelectorAll(
+                    `#view-${viewName}`
                 );
 
-            if (view) {
 
-                view.classList.add(
-                    'hidden'
-                );
+            elements.forEach(
+                view => {
 
-                view.style.display =
-                    'none';
+                    view.classList.add(
+                        'hidden'
+                    );
 
-            }
+                    view.style.display =
+                        'none';
+
+                }
+            );
 
         }
     );
 
 
-    // ----------------------------------------------------------
-    // Tampilkan view aktif
-    // ----------------------------------------------------------
+    // ========================================================
+    // TAMPILKAN VIEW AKTIF
+    // ========================================================
 
-    const activeView =
-        document.getElementById(
-            `view-${tabName}`
+    const activeViews =
+        document.querySelectorAll(
+            `#view-${tabName}`
         );
 
 
-    if (!activeView) {
+    if (!activeViews.length) {
 
         console.error(
             `[NAVIGASI] view-${tabName} tidak ditemukan`
@@ -289,12 +578,18 @@ function switchTab(
     }
 
 
-    activeView.classList.remove(
-        'hidden'
-    );
+    activeViews.forEach(
+        view => {
 
-    activeView.style.display =
-        '';
+            view.classList.remove(
+                'hidden'
+            );
+
+            view.style.display =
+                '';
+
+        }
+    );
 
 
     console.log(
@@ -302,25 +597,23 @@ function switchTab(
     );
 
 
-    // ----------------------------------------------------------
-    // Update navigation
-    // ----------------------------------------------------------
+    // ========================================================
+    // BOTTOM NAVIGATION
+    // ========================================================
 
     document
         .querySelectorAll('.nav-item')
-        .forEach(
-            btn => {
+        .forEach(btn => {
 
-                btn.classList.remove(
-                    'active-tab'
-                );
+            btn.classList.remove(
+                'active-tab'
+            );
 
-                btn.classList.add(
-                    'text-slate-400'
-                );
+            btn.classList.add(
+                'text-slate-400'
+            );
 
-            }
-        );
+        });
 
 
     const activeBtn =
@@ -342,9 +635,9 @@ function switchTab(
     }
 
 
-    // ----------------------------------------------------------
-    // Filter doa
-    // ----------------------------------------------------------
+    // ========================================================
+    // FILTER DOA
+    // ========================================================
 
     if (
         tabName === 'doa' &&
@@ -361,18 +654,8 @@ function switchTab(
 
 
 // ============================================================
-// EXPORT SWITCHTAB KE WINDOW
+// EXPOSE UNTUK CONSOLE
 // ============================================================
-//
-// Karena app.js menggunakan ES Module,
-// function tidak otomatis tersedia di Console.
-//
-// Dengan ini:
-//
-// switchTab('quran')
-//
-// bisa dipanggil dari Console.
-//
 
 window.switchTab =
     switchTab;
@@ -442,9 +725,7 @@ async function loadAllDoa() {
 
 function filterDoa(kat) {
 
-    if (!state.doaList) {
-        return;
-    }
+    if (!state.doaList) return;
 
 
     if (
@@ -471,8 +752,7 @@ function filterDoa(kat) {
                         d.grup ||
                         d.kategori ||
                         ''
-                    )
-                    .toLowerCase();
+                    ).toLowerCase();
 
 
                 return itemKat.includes(
@@ -511,8 +791,7 @@ async function loadPrayerSchedule(
         const mm =
             String(
                 now.getMonth() + 1
-            )
-            .padStart(
+            ).padStart(
                 2,
                 '0'
             );
@@ -521,8 +800,7 @@ async function loadPrayerSchedule(
         const dd =
             String(
                 now.getDate()
-            )
-            .padStart(
+            ).padStart(
                 2,
                 '0'
             );
@@ -590,7 +868,7 @@ async function loadPrayerSchedule(
             if (fullDate) {
 
                 fullDate.innerText =
-                    data.data.jadwal?.tanggal ||
+                    data.data.jadwal.tanggal ||
                     '';
 
             }
@@ -638,20 +916,13 @@ function updateFiqihUI(
     jadwal
 ) {
 
-    if (!jadwal) {
-        return;
-    }
-
-
     const fiqihData =
         calculateFiqihTimes(
             jadwal
         );
 
 
-    if (!fiqihData) {
-        return;
-    }
+    if (!fiqihData) return;
 
 
     const elSyuruq =
@@ -666,11 +937,16 @@ function updateFiqihUI(
         );
 
 
+    const elTahajud =
+        document.getElementById(
+            'time-tahajud'
+        );
+
+
     if (elSyuruq) {
 
         elSyuruq.innerText =
-            fiqihData.syuruq ||
-            '--:--';
+            fiqihData.syuruq;
 
     }
 
@@ -678,25 +954,15 @@ function updateFiqihUI(
     if (elDhuha) {
 
         elDhuha.innerText =
-            `Awal Dhuha: ~${
-                fiqihData.dhuha ||
-                '--:--'
-            }`;
+            `Awal Dhuha: ~${fiqihData.dhuha}`;
 
     }
-
-
-    const elTahajud =
-        document.getElementById(
-            'time-tahajud'
-        );
 
 
     if (elTahajud) {
 
         elTahajud.innerText =
-            fiqihData.tahajud ||
-            '--:--';
+            fiqihData.tahajud;
 
     }
 
@@ -722,8 +988,7 @@ function updateFiqihUI(
     if (
         container &&
         title &&
-        desc &&
-        fiqihData.statusHaram
+        desc
     ) {
 
         title.innerText =
@@ -779,9 +1044,7 @@ function updateFiqihUI(
 
 function updateNextPrayer(j) {
 
-    if (!j) {
-        return;
-    }
+    if (!j) return;
 
 
     const times = [
@@ -826,27 +1089,15 @@ function updateNextPrayer(j) {
         const t of times
     ) {
 
-        if (!t.time) {
+        if (!t.time)
             continue;
-        }
 
 
-        const parts =
+        const [
+            h,
+            m
+        ] =
             t.time.split(':');
-
-
-        const h =
-            parseInt(
-                parts[0],
-                10
-            );
-
-
-        const m =
-            parseInt(
-                parts[1],
-                10
-            );
 
 
         const pTime =
@@ -854,8 +1105,8 @@ function updateNextPrayer(j) {
 
 
         pTime.setHours(
-            h,
-            m,
+            parseInt(h),
+            parseInt(m),
             0,
             0
         );
@@ -881,31 +1132,21 @@ function updateNextPrayer(j) {
     }
 
 
-    // ----------------------------------------------------------
-    // Jika semua waktu hari ini sudah lewat
-    // ----------------------------------------------------------
+    if (!next) {
 
-    if (
-        !next &&
-        times[0]?.time
-    ) {
-
-        const parts =
-            times[0].time.split(':');
+        if (
+            !times[0] ||
+            !times[0].time
+        ) return;
 
 
-        const h =
-            parseInt(
-                parts[0],
-                10
-            );
-
-
-        const m =
-            parseInt(
-                parts[1],
-                10
-            );
+        const [
+            h,
+            m
+        ] =
+            times[0]
+                .time
+                .split(':');
 
 
         const pTime =
@@ -918,8 +1159,8 @@ function updateNextPrayer(j) {
 
 
         pTime.setHours(
-            h,
-            m,
+            parseInt(h),
+            parseInt(m),
             0,
             0
         );
@@ -935,11 +1176,6 @@ function updateNextPrayer(j) {
 
         };
 
-    }
-
-
-    if (!next) {
-        return;
     }
 
 
@@ -985,11 +1221,7 @@ function startTimer() {
 
             if (
                 !state.nextPrayerTime
-            ) {
-
-                return;
-
-            }
+            ) return;
 
 
             const diff =
@@ -997,9 +1229,7 @@ function startTimer() {
                 new Date();
 
 
-            if (
-                diff <= 0
-            ) {
+            if (diff <= 0) {
 
                 if (
                     state.prayerData
@@ -1028,8 +1258,7 @@ function startTimer() {
                             )
                         ) % 24
                     )
-                )
-                .padStart(
+                ).padStart(
                     2,
                     '0'
                 );
@@ -1046,8 +1275,7 @@ function startTimer() {
                             )
                         ) % 60
                     )
-                )
-                .padStart(
+                ).padStart(
                     2,
                     '0'
                 );
@@ -1061,8 +1289,7 @@ function startTimer() {
                             1000
                         ) % 60
                     )
-                )
-                .padStart(
+                ).padStart(
                     2,
                     '0'
                 );
@@ -1096,19 +1323,16 @@ async function loadDailyAyat() {
 
     try {
 
-        const startOfYear =
-            new Date(
-                new Date().getFullYear(),
-                0,
-                0
-            );
-
-
         const dayOfYear =
             Math.floor(
                 (
                     new Date() -
-                    startOfYear
+                    new Date(
+                        new Date()
+                            .getFullYear(),
+                        0,
+                        0
+                    )
                 ) /
                 (
                     1000 *
@@ -1120,7 +1344,9 @@ async function loadDailyAyat() {
 
 
         const surahNo =
-            (dayOfYear % 114) + 1;
+            (
+                dayOfYear % 114
+            ) + 1;
 
 
         const data =
@@ -1131,23 +1357,15 @@ async function loadDailyAyat() {
 
         if (
             !data ||
-            !Array.isArray(
-                data.ayat
-            )
-        ) {
-
-            return;
-
-        }
+            !data.ayat
+        ) return;
 
 
         const ayat =
             data.ayat[0];
 
 
-        if (!ayat) {
-            return;
-        }
+        if (!ayat) return;
 
 
         const refEl =
@@ -1171,13 +1389,7 @@ async function loadDailyAyat() {
         if (refEl) {
 
             refEl.innerText =
-                `Q.S. ${
-                    data.namaLatin ||
-                    ''
-                }: ${
-                    ayat.nomorAyat ||
-                    ''
-                }`;
+                `Q.S. ${data.namaLatin}: ${ayat.nomorAyat}`;
 
         }
 
@@ -1300,79 +1512,25 @@ async function loadDailyHadits() {
 
 
 // ============================================================
-// QURAN - DAFTAR SURAH
+// DAFTAR SURAH
 // ============================================================
 
 async function loadSurahList() {
 
-    console.log(
-        '[QURAN] Memuat daftar surah...'
-    );
-
-
     try {
 
-        let list = [];
+        console.log(
+            '[QURAN] Memuat daftar surah...'
+        );
 
 
-        // ------------------------------------------------------
-        // Coba gunakan API module
-        // ------------------------------------------------------
-
-        if (
-            typeof fetchSurahListAPI ===
-            'function'
-        ) {
-
-            list =
-                await fetchSurahListAPI();
-
-        }
-
-
-        // ------------------------------------------------------
-        // Jika API module gagal / kosong,
-        // gunakan langsung equran.id
-        // ------------------------------------------------------
-
-        if (
-            !Array.isArray(list) ||
-            list.length === 0
-        ) {
-
-            console.warn(
-                '[QURAN] API module kosong, menggunakan fallback'
-            );
-
-
-            const response =
-                await fetch(
-                    'https://equran.id/api/v2/surat'
-                );
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    `HTTP ${response.status}`
-                );
-
-            }
-
-
-            const json =
-                await response.json();
-
-
-            list =
-                json.data || [];
-
-        }
+        const list =
+            await fetchSurahListAPI();
 
 
         console.log(
-            '[QURAN] Jumlah surah:',
-            list.length
+            '[QURAN] Data surah:',
+            list
         );
 
 
@@ -1382,13 +1540,14 @@ async function loadSurahList() {
                 : [];
 
 
-        // ------------------------------------------------------
-        // Render
-        // ------------------------------------------------------
-
         renderSurahListUI(
             state.surahList,
             openSurahModal
+        );
+
+
+        console.log(
+            `[QURAN] Jumlah surah: ${state.surahList.length}`
         );
 
 
@@ -1400,46 +1559,9 @@ async function loadSurahList() {
     } catch (error) {
 
         console.error(
-            '[QURAN] Gagal memuat daftar:',
+            '[QURAN] Error:',
             error
         );
-
-
-        const container =
-            document.getElementById(
-                'surah-list'
-            ) ||
-            document.getElementById(
-                'surah-list-container'
-            );
-
-
-        if (container) {
-
-            container.innerHTML = `
-                <div class="p-4 text-center text-xs text-red-500">
-                    Gagal memuat daftar Al-Qur'an.
-                    <br>
-                    <button
-                        id="btn-retry-quran"
-                        class="mt-3 px-4 py-2 bg-emerald-600 text-white rounded-lg"
-                    >
-                        Coba Lagi
-                    </button>
-                </div>
-            `;
-
-
-            document
-                .getElementById(
-                    'btn-retry-quran'
-                )
-                ?.addEventListener(
-                    'click',
-                    loadSurahList
-                );
-
-        }
 
     }
 
@@ -1483,67 +1605,25 @@ async function openSurahModal(
 
     if (container) {
 
-        container.innerHTML =
-            `
+        container.innerHTML = `
             <div class="p-4 text-center text-xs text-slate-400 animate-pulse">
                 Memuat ayat Al-Qur'an...
             </div>
-            `;
+        `;
 
     }
 
 
     try {
 
-        let surah =
+        const surah =
             await fetchSurahDetailAPI(
                 nomor
             );
 
 
-        // ------------------------------------------------------
-        // Fallback langsung equran.id
-        // ------------------------------------------------------
-
-        if (!surah) {
-
-            const response =
-                await fetch(
-                    `https://equran.id/api/v2/surat/${nomor}`
-                );
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    `HTTP ${response.status}`
-                );
-
-            }
-
-
-            const json =
-                await response.json();
-
-
-            surah =
-                json.data;
-
-        }
-
-
-        if (
-            !surah ||
-            !Array.isArray(
-                surah.ayat
-            )
-        ) {
-
-            throw new Error(
-                'Data detail surah tidak valid'
-            );
-
-        }
+        if (!surah)
+            return;
 
 
         const titleEl =
@@ -1561,10 +1641,7 @@ async function openSurahModal(
         if (titleEl) {
 
             titleEl.innerText =
-                `${surah.nomor}. Surah ${
-                    surah.namaLatin ||
-                    ''
-                }`;
+                `${surah.nomor}. Surah ${surah.namaLatin}`;
 
         }
 
@@ -1572,17 +1649,13 @@ async function openSurahModal(
         if (subEl) {
 
             subEl.innerText =
-                `${surah.arti || ''} • ${
-                    surah.jumlahAyat ||
-                    surah.ayat.length
-                } Ayat`;
+                `${surah.arti} • ${surah.jumlahAyat} Ayat`;
 
         }
 
 
-        if (!container) {
+        if (!container)
             return;
-        }
 
 
         container.innerHTML =
@@ -1590,47 +1663,42 @@ async function openSurahModal(
                 .map(
                     a => `
 
-                    <div class="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 space-y-3">
+                <div class="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 space-y-3">
 
-                        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-2">
 
-                            <span class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
-                                ${a.nomorAyat}
-                            </span>
+                        <span class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
+                            ${a.nomorAyat}
+                        </span>
 
-                            <button
-                                class="btn-play-verse text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full font-medium"
-                                data-audio="${a.audio?.['05'] || ''}"
-                            >
-                                <i class="fa-solid fa-play mr-1"></i>
-                                Audio
-                            </button>
-
-                        </div>
-
-                        <p class="text-right font-arabic text-2xl leading-loose text-slate-800">
-                            ${a.teksArab || ''}
-                        </p>
-
-                        <p class="text-xs text-emerald-700 font-medium">
-                            ${a.teksLatin || ''}
-                        </p>
-
-                        <p class="text-xs text-slate-600 leading-relaxed">
-                            ${a.teksIndonesia || ''}
-                        </p>
+                        <button
+                            class="btn-play-verse text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full font-medium"
+                            data-audio="${a.audio?.['05'] || ''}"
+                        >
+                            <i class="fa-solid fa-play mr-1"></i>
+                            Audio
+                        </button>
 
                     </div>
 
-                    `
+                    <p class="text-right font-arabic text-2xl leading-loose text-slate-800">
+                        ${a.teksArab || ''}
+                    </p>
+
+                    <p class="text-xs text-emerald-700 font-medium">
+                        ${a.teksLatin || ''}
+                    </p>
+
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        ${a.teksIndonesia || ''}
+                    </p>
+
+                </div>
+
+            `
                 )
                 .join('');
-        container.scrollTop = 0;
 
-
-        // ------------------------------------------------------
-        // Audio ayat
-        // ------------------------------------------------------
 
         container
             .querySelectorAll(
@@ -1643,29 +1711,20 @@ async function openSurahModal(
                         'click',
                         () => {
 
-                            const audio =
-                                button.dataset.audio;
+                            if (
+                                button.dataset.audio
+                            ) {
 
+                                new Audio(
+                                    button.dataset.audio
+                                ).play();
 
-                            if (!audio) {
 
                                 showToast(
-                                    'Audio tidak tersedia'
+                                    'Memutar audio ayat...'
                                 );
 
-                                return;
-
                             }
-
-
-                            new Audio(
-                                audio
-                            ).play();
-
-
-                            showToast(
-                                'Memutar audio ayat...'
-                            );
 
                         }
                     );
@@ -1685,7 +1744,7 @@ async function openSurahModal(
         if (container) {
 
             container.innerHTML = `
-                <div class="p-4 text-center text-xs text-red-500">
+                <div class="p-5 text-center text-sm text-rose-500">
                     Gagal memuat ayat.
                 </div>
             `;
@@ -1711,17 +1770,15 @@ async function renderHaditsFeed(
         );
 
 
-    if (!container) {
+    if (!container)
         return;
-    }
 
 
-    container.innerHTML =
-        `
+    container.innerHTML = `
         <div class="p-4 text-center text-xs text-slate-400 animate-pulse">
             Memuat data hadis...
         </div>
-        `;
+    `;
 
 
     try {
@@ -1753,40 +1810,37 @@ async function renderHaditsFeed(
                     .map(
                         h => `
 
-                        <div class="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 space-y-2.5">
+                    <div class="p-4 bg-white rounded-2xl shadow-sm border border-slate-100 space-y-2.5">
 
-                            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
 
-                                <span class="text-xs font-bold text-emerald-700 uppercase">
-                                    HR. ${bookName} No. ${
-                                        h.number || '-'
-                                    }
-                                </span>
-
-                            </div>
-
-                            <p class="text-right font-arabic text-xl leading-loose text-slate-800">
-                                ${h.arab || ''}
-                            </p>
-
-                            <p class="text-xs text-slate-600 leading-relaxed">
-                                ${h.id || ''}
-                            </p>
+                            <span class="text-xs font-bold text-emerald-700 uppercase">
+                                HR. ${bookName} No. ${h.number || '-'}
+                            </span>
 
                         </div>
 
-                        `
+                        <p class="text-right font-arabic text-xl leading-loose text-slate-800">
+                            ${h.arab || ''}
+                        </p>
+
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            ${h.id || ''}
+                        </p>
+
+                    </div>
+
+                `
                     )
                     .join('');
 
         } else {
 
-            container.innerHTML =
-                `
+            container.innerHTML = `
                 <div class="p-4 text-center text-xs text-amber-600">
                     Gagal memuat data hadits.
                 </div>
-                `;
+            `;
 
         }
 
@@ -1799,12 +1853,11 @@ async function renderHaditsFeed(
         );
 
 
-        container.innerHTML =
-            `
+        container.innerHTML = `
             <div class="p-4 text-center text-xs text-red-500">
                 Terjadi kesalahan saat memuat hadis.
             </div>
-            `;
+        `;
 
     }
 
@@ -1844,10 +1897,6 @@ function initEventListeners() {
                         .trim();
 
 
-                // ------------------------------
-                // Search Quran
-                // ------------------------------
-
                 if (
                     state.surahList &&
                     state.surahList.length > 0
@@ -1882,7 +1931,6 @@ function initEventListeners() {
                                 String(
                                     s.nomor
                                 ) === query
-
                         );
 
 
@@ -1893,10 +1941,6 @@ function initEventListeners() {
 
                 }
 
-
-                // ------------------------------
-                // Search Doa
-                // ------------------------------
 
                 if (
                     state.doaList &&
@@ -1948,7 +1992,6 @@ function initEventListeners() {
                                     .includes(
                                         query
                                     )
-
                         );
 
 
@@ -1958,10 +2001,6 @@ function initEventListeners() {
 
                 }
 
-
-                // ------------------------------
-                // Search Hadis
-                // ------------------------------
 
                 const haditsCards =
                     document.querySelectorAll(
@@ -1987,11 +2026,6 @@ function initEventListeners() {
                     }
                 );
 
-
-                // ------------------------------
-                // Jika search dari dashboard
-                // buka Quran
-                // ------------------------------
 
                 if (
                     query.length > 0 &&
@@ -2028,7 +2062,8 @@ function initEventListeners() {
 
                         const bookName =
                             e.currentTarget
-                                .dataset.book;
+                                .dataset
+                                .book;
 
 
                         document
@@ -2215,109 +2250,186 @@ function initEventListeners() {
 
 
     // ========================================================
-    // MENU QURAN
-    // ========================================================
-
-  // ========================================================
-// QUICK MENU - EVENT DELEGATION
-// Aman untuk HTML yang dimuat secara dinamis
-// ========================================================
-
-document.addEventListener('click', function (e) {
-
-    const btn = e.target.closest('[id^="btn-menu-"]');
-
-    if (!btn) return;
-
-    console.log('[MENU] Klik:', btn.id);
-
-    switch (btn.id) {
-
-        case 'btn-menu-quran':
-            switchTab('quran');
-            break;
-
-        case 'btn-menu-doa':
-            switchTab('doa');
-            break;
-
-        case 'btn-menu-hadits':
-            switchTab('hadits');
-            break;
-
-        case 'btn-menu-sholat':
-            switchTab('sholat');
-            break;
-
-        case 'btn-menu-pagi':
-            switchTab('doa', 'pagi');
-            break;
-
-        case 'btn-menu-petang':
-            switchTab('doa', 'petang');
-            break;
-
-        case 'btn-menu-kiblat':
-            showToast('Arah Kiblat Indonesia ~294° N-W.');
-            break;
-
-        case 'btn-menu-kajian':
-            openTelegramModal('kajian');
-            break;
-
-        case 'btn-menu-nasihat':
-            openTelegramModal('nasihat');
-            break;
-
-        case 'btn-menu-tasbih':
-            document
-                .getElementById('tasbih-modal')
-                ?.classList.remove('hidden');
-            break;
-    }
-
-});
-
-
-    // ========================================================
-    // AUDIO AYAT HARIAN
+    // MENU UTAMA
     // ========================================================
 
     document
         .getElementById(
-            'daily-audio-btn'
+            'btn-menu-quran'
         )
         ?.addEventListener(
             'click',
             () => {
 
-                if (
-                    state.dailyAyatAudio
-                ) {
+                console.log(
+                    '[MENU] Klik btn-menu-quran'
+                );
 
-                    new Audio(
-                        state.dailyAyatAudio
-                    ).play();
+                switchTab(
+                    'quran'
+                );
+
+            }
+        );
 
 
-                    showToast(
-                        'Memutar audio...'
-                    );
+    document
+        .getElementById(
+            'btn-menu-doa'
+        )
+        ?.addEventListener(
+            'click',
+            () => {
 
-                } else {
+                console.log(
+                    '[MENU] Klik btn-menu-doa'
+                );
 
-                    showToast(
-                        'Audio belum tersedia'
-                    );
+                switchTab(
+                    'doa'
+                );
 
-                }
+            }
+        );
+
+
+    document
+        .getElementById(
+            'btn-menu-hadits'
+        )
+        ?.addEventListener(
+            'click',
+            () => {
+
+                console.log(
+                    '[MENU] Klik btn-menu-hadits'
+                );
+
+                switchTab(
+                    'hadits'
+                );
+
+            }
+        );
+
+
+    document
+        .getElementById(
+            'btn-menu-sholat'
+        )
+        ?.addEventListener(
+            'click',
+            () =>
+                switchTab(
+                    'sholat'
+                )
+        );
+
+
+    document
+        .getElementById(
+            'btn-menu-pagi'
+        )
+        ?.addEventListener(
+            'click',
+            () =>
+                switchTab(
+                    'doa',
+                    'pagi'
+                )
+        );
+
+
+    document
+        .getElementById(
+            'btn-menu-petang'
+        )
+        ?.addEventListener(
+            'click',
+            () =>
+                switchTab(
+                    'doa',
+                    'petang'
+                )
+        );
+
+
+    document
+        .getElementById(
+            'btn-more-hadits'
+        )
+        ?.addEventListener(
+            'click',
+            () =>
+                switchTab(
+                    'hadits'
+                )
+        );
+
+
+    // ========================================================
+    // KIBLAT
+    // ========================================================
+
+    document
+        .getElementById(
+            'btn-menu-kiblat'
+        )
+        ?.addEventListener(
+            'click',
+            () =>
+                showToast(
+                    'Arah Kiblat Indonesia ~294° N-W.'
+                )
+        );
+
+
+    // ========================================================
+    // KAJIAN
+    // ========================================================
+
+    document
+        .getElementById(
+            'btn-menu-kajian'
+        )
+        ?.addEventListener(
+            'click',
+            e => {
+
+                e.preventDefault();
+
+                openTelegramModal(
+                    'kajian'
+                );
 
             }
         );
 
 
     // ========================================================
-    // CLOSE SURAH
+    // NASIHAT
+    // ========================================================
+
+    document
+        .getElementById(
+            'btn-menu-nasihat'
+        )
+        ?.addEventListener(
+            'click',
+            e => {
+
+                e.preventDefault();
+
+                openTelegramModal(
+                    'nasihat'
+                );
+
+            }
+        );
+
+
+    // ========================================================
+    // TUTUP SURAH
     // ========================================================
 
     document
@@ -2340,147 +2452,6 @@ document.addEventListener('click', function (e) {
         );
 
 
-    // ========================================================
-    // SEARCH KOTA
-    // ========================================================
-
-    document
-        .getElementById(
-            'btn-search-city'
-        )
-        ?.addEventListener(
-            'click',
-            async () => {
-
-                const input =
-                    document.getElementById(
-                        'city-search-input'
-                    );
-
-
-                if (!input) {
-                    return;
-                }
-
-
-                const q =
-                    input.value.trim();
-
-
-                if (!q) {
-                    return;
-                }
-
-
-                try {
-
-                    const res =
-                        await searchCityAPI(
-                            q
-                        );
-
-
-                    const container =
-                        document.getElementById(
-                            'city-search-results'
-                        );
-
-
-                    if (
-                        res &&
-                        res.status &&
-                        res.data &&
-                        res.data.length > 0 &&
-                        container
-                    ) {
-
-                        container.innerHTML =
-                            res.data
-                                .map(
-                                    c => `
-
-                                    <div
-                                        class="city-item p-2 hover:bg-emerald-50 rounded-lg cursor-pointer flex justify-between items-center"
-                                        data-id="${c.id}"
-                                    >
-
-                                        <span>
-                                            ${c.lokasi}
-                                        </span>
-
-                                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
-
-                                    </div>
-
-                                    `
-                                )
-                                .join('');
-
-
-                        container
-                            .querySelectorAll(
-                                '.city-item'
-                            )
-                            .forEach(
-                                el => {
-
-                                    el.addEventListener(
-                                        'click',
-                                        () => {
-
-                                            loadPrayerSchedule(
-                                                el.dataset.id
-                                            );
-
-
-                                            container.innerHTML =
-                                                '';
-
-
-                                            showToast(
-                                                'Lokasi diubah!'
-                                            );
-
-                                        }
-                                    );
-
-                                }
-                            );
-
-                    } else {
-
-                        showToast(
-                            'Kota tidak ditemukan'
-                        );
-
-                    }
-
-
-                } catch (error) {
-
-                    console.error(
-                        '[SEARCH KOTA]',
-                        error
-                    );
-
-
-                    showToast(
-                        'Gagal mencari kota'
-                    );
-
-                }
-
-            }
-        );
-
-
-    // ========================================================
-    // KOMPAS
-    // ========================================================
-
-    initCompass();
-
-
     console.log(
         '[EVENT] Semua event listener selesai dipasang'
     );
@@ -2500,28 +2471,32 @@ function calculateQiblaBearing(
     const kaabaLat =
         21.422487 *
         (
-            Math.PI / 180
+            Math.PI /
+            180
         );
 
 
     const kaabaLng =
         39.826206 *
         (
-            Math.PI / 180
+            Math.PI /
+            180
         );
 
 
     const myLat =
         lat *
         (
-            Math.PI / 180
+            Math.PI /
+            180
         );
 
 
     const myLng =
         lng *
         (
-            Math.PI / 180
+            Math.PI /
+            180
         );
 
 
@@ -2558,20 +2533,18 @@ function calculateQiblaBearing(
             x
         ) *
         (
-            180 / Math.PI
+            180 /
+            Math.PI
         );
 
 
     return (
-        qibla + 360
+        qibla +
+        360
     ) % 360;
 
 }
 
-
-// ============================================================
-// KOMPAS
-// ============================================================
 
 function initCompass() {
 
@@ -2590,99 +2563,85 @@ function initCompass() {
         );
 
 
-    const updatePointer =
-        () => {
-
-            const pointer =
-                document.getElementById(
-                    'qibla-pointer'
-                );
-
-
-            if (pointer) {
-
-                pointer.style.transform =
-                    `rotate(${qiblaBearing}deg)`;
-
-            }
-
-
-            const degInfo =
-                document.getElementById(
-                    'kiblat-degree-info'
-                );
-
-
-            if (degInfo) {
-
-                degInfo.innerText =
-                    `Arah Kiblat: ~${
-                        Math.round(
-                            qiblaBearing
-                        )
-                    }° N-W`;
-
-            }
-
-        };
-
-
-    // ----------------------------------------------------------
-    // Geolocation
-    // ----------------------------------------------------------
-
     if (
         navigator.geolocation
     ) {
 
-        navigator.geolocation.getCurrentPosition(
+        navigator.geolocation
+            .getCurrentPosition(
+                pos => {
 
-            pos => {
+                    userLat =
+                        pos.coords.latitude;
 
-                userLat =
-                    pos.coords.latitude;
-
-
-                userLng =
-                    pos.coords.longitude;
+                    userLng =
+                        pos.coords.longitude;
 
 
-                qiblaBearing =
-                    calculateQiblaBearing(
-                        userLat,
-                        userLng
+                    qiblaBearing =
+                        calculateQiblaBearing(
+                            userLat,
+                            userLng
+                        );
+
+
+                    const degInfo =
+                        document.getElementById(
+                            'kiblat-degree-info'
+                        );
+
+
+                    if (degInfo) {
+
+                        degInfo.innerText =
+                            `Arah Kiblat: ~${Math.round(
+                                qiblaBearing
+                            )}° N-W`;
+
+                    }
+
+
+                    const pointer =
+                        document.getElementById(
+                            'qibla-pointer'
+                        );
+
+
+                    if (pointer) {
+
+                        pointer.style.transform =
+                            `rotate(${qiblaBearing}deg)`;
+
+                    }
+
+                },
+
+                error => {
+
+                    console.warn(
+                        '[KIBLAT] Lokasi tidak tersedia:',
+                        error.message
                     );
 
-
-                updatePointer();
-
-            },
-
-
-            error => {
-
-                console.warn(
-                    '[KIBLAT] Lokasi tidak tersedia:',
-                    error.message
-                );
-
-
-                updatePointer();
-
-            }
-
-        );
-
-    } else {
-
-        updatePointer();
+                }
+            );
 
     }
 
 
-    // ----------------------------------------------------------
-    // Device Orientation
-    // ----------------------------------------------------------
+    const pointer =
+        document.getElementById(
+            'qibla-pointer'
+        );
+
+
+    if (pointer) {
+
+        pointer.style.transform =
+            `rotate(${qiblaBearing}deg)`;
+
+    }
+
 
     if (
         window.DeviceOrientationEvent
@@ -2692,33 +2651,15 @@ function initCompass() {
             'deviceorientation',
             e => {
 
-                let heading;
-
-
-                if (
-                    typeof e.webkitCompassHeading ===
-                    'number'
-                ) {
-
-                    heading =
-                        e.webkitCompassHeading;
-
-                } else if (
-                    typeof e.alpha ===
-                    'number'
-                ) {
-
-                    heading =
+                let heading =
+                    e.webkitCompassHeading ||
+                    (
                         360 -
-                        e.alpha;
+                        e.alpha
+                    );
 
-                }
 
-
-                if (
-                    typeof heading ===
-                    'number'
-                ) {
+                if (heading) {
 
                     const dial =
                         document.getElementById(
@@ -2729,9 +2670,7 @@ function initCompass() {
                     if (dial) {
 
                         dial.style.transform =
-                            `rotate(${
-                                -heading
-                            }deg)`;
+                            `rotate(${-heading}deg)`;
 
                     }
 
@@ -2746,7 +2685,7 @@ function initCompass() {
 
 
 // ============================================================
-// DEBUG GLOBAL
+// GLOBAL quranApp
 // ============================================================
 
 window.quranApp = {
@@ -2757,35 +2696,25 @@ window.quranApp = {
 
     openSurahModal,
 
+    loadDailyAyat,
+
+    loadDailyHadits,
+
+    loadAllDoa,
+
+    renderHaditsFeed,
+
+    loadPrayerSchedule,
+
     filterDoa,
 
-    loadPrayerSchedule
+    initializeUIComponents,
+
+    loadComponent
 
 };
 
 
 console.log(
-    '[QURAN DIGITAL] app.js berhasil dimuat'
+    '=== quranApp SIAP ==='
 );
-
-// ============================================================
-// PUBLIC API - UNTUK CONSOLE / DEBUG
-// ============================================================
-
-window.quranApp = {
-    switchTab,
-    loadSurahList,
-    openSurahModal,
-    loadDailyAyat,
-    loadDailyHadits,
-    renderHaditsFeed,
-    loadAllDoa,
-    filterDoa,
-    loadPrayerSchedule
-};
-
-window.switchTab = switchTab;
-
-console.log('[QURAN DIGITAL] quranApp siap');
-
-
