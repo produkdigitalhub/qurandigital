@@ -1,19 +1,67 @@
 export const state = {
+
     activeTab: 'dashboard',
-    cityId: '2622', // Default: Makassar
+
+    // ==========================================
+    // LOCATION
+    // ==========================================
+
+    cityId: '2622',
+
     cityName: 'Kota Makassar',
+
+    country: 'Indonesia',
+
+    latitude: -5.1477,
+
+    longitude: 119.4327,
+
+    locationSource: 'default',
+
+    // ==========================================
+    // PRAYER
+    // ==========================================
+
     prayerData: null,
+
     nextPrayerTime: null,
+
+    // ==========================================
+    // QURAN
+    // ==========================================
+
     surahList: [],
+
     dailyAyatAudio: null,
+
+    // ==========================================
+    // TASBIH
+    // ==========================================
+
     tasbihCount: 0,
+
     tasbihIndex: 0,
+
     tasbihPhrases: [
-        { arab: 'Subhanallah', latin: 'Maha Suci Allah' },
-        { arab: 'Alhamdulillah', latin: 'Segala Puji Bagi Allah' },
-        { arab: 'Allahu Akbar', latin: 'Allah Maha Besar' },
-        { arab: 'Astaghfirullah', latin: 'Aku Memohon Ampun Kepada Allah' }
+        {
+            arab: 'Subhanallah',
+            latin: 'Maha Suci Allah'
+        },
+        {
+            arab: 'Alhamdulillah',
+            latin: 'Segala Puji Bagi Allah'
+        },
+        {
+            arab: 'Allahu Akbar',
+            latin: 'Allah Maha Besar'
+        },
+        {
+            arab: 'Astaghfirullah',
+            latin: 'Aku Memohon Ampun Kepada Allah'
+        }
     ],
+
+   
     doaList: [
         { id: 1, judul: 'Doa Sebelum Makan', arab: 'اللَّهُمَّ بَارِكْ لَنَا فِيمَا رَزَقْتَنَا وَقِنَا عَذَابَ النَّارِ', latin: 'Allahumma baarik lanaa fii maa razaqtanaa wa qinaa \'adzaa ban-naar.', arti: 'Ya Allah, berkahilah kami dalam rezeki yang telah Engkau berikan kepada kami dan peliharalah kami dari siksa api neraka.', kat: 'makan' },
         { id: 2, judul: 'Doa Setelah Makan', arab: 'الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنَا وَسَقَانَا وَجَعَلَنَا مُسْلِمِينَ', latin: 'Alhamdu lillahilladzii ath\'amanaa wa saqaanaa wa ja\'alanaa muslimiin.', arti: 'Segala puji bagi Allah yang telah memberi kami makan dan minum serta menjadikan kami termasuk orang-orang muslim.', kat: 'makan' },
