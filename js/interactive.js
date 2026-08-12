@@ -1,3 +1,29 @@
+async function loadHeader() {
+    const container = document.getElementById('header-container');
+
+    if (!container) {
+        console.error('header-container tidak ditemukan');
+        return;
+    }
+
+    try {
+        const response = await fetch('/qurandigital/components/header.html');
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const html = await response.text();
+        container.innerHTML = html;
+
+        console.log('✅ Header berhasil dimuat');
+    } catch (error) {
+        console.error('❌ Gagal memuat header.html:', error);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadHeader);
+
 // DATA BASE MOOD QUOTE
 const MOOD_QUOTES = {
     sedih: [
