@@ -174,105 +174,44 @@ export async function loadComponent(elementId, filepath) {
 // INITIALIZE UI COMPONENTS
 // ============================================================
 
-export async function initializeUIComponents() {
+async function initializeUIComponents() {
+    console.log('[UI] Mode inline HTML aktif.');
+    console.log('[UI] Tidak memuat component HTML eksternal.');
 
-    console.log(
-        '[UI] Mulai memuat semua component...'
-    );
-
-    const components = [
-
-        // Header
-        [
-            'header-container',
-            '../components/header.html'
-        ],
-
-        // Dashboard
-        [
-            'card-next-prayer',
-            '../components/dashboard/next-prayer.html'
-        ],
-
-        [
-            'card-jurnal',
-            '../components/dashboard/mutabaah-jurnal.html'
-        ],
-
-        [
-            'card-quick-menu',
-            '../components/dashboard/quick-menu.html'
-        ],
-
-        [
-            'card-daily-ayat',
-            '../components/dashboard/daily-ayat.html'
-        ],
-
-        [
-            'card-daily-hadits',
-            '../components/dashboard/daily-hadits.html'
-        ],
-
-        [
-            'card-telegram-feed',
-            '../components/dashboard/telegram-feed.html'
-        ],
-
-        // Views
-       
-
-        // Modals
-        [
-            'modal-surah-container',
-            '../components/modals/surah-modal.html'
-        ],
-
-        [
-            'modal-tasbih-container',
-            '../components/modals/tasbih-modal.html'
-        ],
-
-        [
-            'modal-kiblat-container',
-            '../components/modals/kiblat-modal.html'
-        ],
-
-        [
-            'modal-share-container',
-            '../components/modals/share-modal.html'
-        ],
-
-        [
-            'modal-telegram-container',
-            '../components/modals/telegram-modal.html'
-        ]
+    // Semua komponen sudah berada langsung di index.html.
+    // Tidak perlu fetch:
+    // ./components/...
+    // ../components/...
+    
+    const requiredElements = [
+        'view-dashboard',
+        'view-quran',
+        'view-doa',
+        'view-hadits',
+        'view-sholat',
+        'surah-list',
+        'doa-list-container',
+        'hadits-feed-container',
+        'full-prayer-rows'
     ];
 
+    let found = 0;
 
-    let berhasil = 0;
-    let gagal = 0;
+    requiredElements.forEach(id => {
+        const el = document.getElementById(id);
 
-
-    for (const [elementId, filepath] of components) {
-
-        const result =
-            await loadComponent(
-                elementId,
-                filepath
-            );
-
-        if (result) {
-            berhasil++;
+        if (el) {
+            found++;
         } else {
-            gagal++;
+            console.warn(`[UI] Elemen tidak ditemukan: ${id}`);
         }
-    }
-
+    });
 
     console.log(
-        `[UI] Semua component selesai dimuat. Berhasil: ${berhasil}, Gagal: ${gagal}`
+        `[UI] Inline HTML siap. ${found}/${requiredElements.length} elemen utama ditemukan.`
     );
+
+    return true;
 }
 
 
