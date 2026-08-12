@@ -220,25 +220,7 @@ export async function initializeUIComponents() {
         ],
 
         // Views
-        [
-            'view-quran',
-            '../components/view/quran-view.html'
-        ],
-
-        [
-            'view-doa',
-            '../components/view/doa-view.html'
-        ],
-
-        [
-            'view-hadits',
-            '../components/view/hadits-view.html'
-        ],
-
-        [
-            'view-sholat',
-            '../components/view/sholat-view.html'
-        ],
+       
 
         // Modals
         [
